@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import argparse
-import sys
+import sys #dürfen wir das verwenden???
 import random
 
 def parse_args():
