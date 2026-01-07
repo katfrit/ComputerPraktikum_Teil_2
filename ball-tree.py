@@ -66,4 +66,33 @@ class BallTree:
 
         self.points = None  # free memory
 
-    def knn(self, x, k, heap):
+    def knn_update(self, x, k, heap=[]): 
+        lower_bound = max(0.0, distance(x, self.center) - self.radius)
+
+        if lower_bound > heap[0][0] and len(heap) == k:
+            return 
+        
+        if self.left is None and self.right is None: 
+            for p in self.points:
+                dist = distance(x, p)
+                if len(heap) < k-1:
+                    heap.append((dist, p))  
+                elif len(heap) == k-1:
+                    heap.append((dist, p)) 
+                    heap.sort(reverse=True)
+                elif dist < heap[0][0]:
+                    heap[0] = (dist, p)
+                    heap.sort(reverse=True)
+            return 
+        
+        if distance(x, self.left.center) < distance(x, self.right.center):
+            self.left.knn(x, k, heap)
+            self.right.knn(x, k, heap)
+        else:
+            self.right.knn(x, k, heap)
+            self.left.knn(x, k, heap)
+
+    def knn_query(self, x, k):
+        heap = []
+        self.knn_update(x, k, heap)
+        return [p for (_, p) in heap]
