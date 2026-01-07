@@ -16,6 +16,8 @@ def norm(x):
     return math.sqrt(norm_squared)
 """
 
+import math
+
 def norm(X):
     return math.sqrt(sum(x**2 for x in X))
 
@@ -69,14 +71,15 @@ class BallTree:
     def knn_update(self, x, k, heap=[]): 
         lower_bound = max(0.0, distance(x, self.center) - self.radius)
 
-        if lower_bound > heap[0][0] and len(heap) == k:
+        if len(heap) == k and lower_bound > heap[0][0]:
+            print("Pruned")
             return 
         
         if self.left is None and self.right is None: 
             for p in self.points:
                 dist = distance(x, p)
                 if len(heap) < k-1:
-                    heap.append((dist, p))  
+                    heap.append((dist, p))
                 elif len(heap) == k-1:
                     heap.append((dist, p)) 
                     heap.sort(reverse=True)
@@ -86,11 +89,11 @@ class BallTree:
             return 
         
         if distance(x, self.left.center) < distance(x, self.right.center):
-            self.left.knn(x, k, heap)
-            self.right.knn(x, k, heap)
+            self.left.knn_update(x, k, heap)
+            self.right.knn_update(x, k, heap)
         else:
-            self.right.knn(x, k, heap)
-            self.left.knn(x, k, heap)
+            self.right.knn_update(x, k, heap)
+            self.left.knn_update(x, k, heap)
 
     def knn_query(self, x, k):
         heap = []
