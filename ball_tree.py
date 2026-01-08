@@ -53,8 +53,9 @@ class BallTree:
         return center, max(distance(point, center) for point in points)
     
     def _split(self):
-        p1 = farthest_point(self.points[0], self.points)
-        p2 = farthest_point(p1, self.points) 
+        points = [entry[1] for entry in self.data]
+        p1 = farthest_point(points[0], points)
+        p2 = farthest_point(p1, points) 
 
         left_data = []
         right_data = []
