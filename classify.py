@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import sys
+import os
 import argparse
 import random
 from ball_tree import BallTree, distance
 import time
+import matplotlib.pyplot as plt
 
 
 
@@ -72,22 +74,23 @@ def run_cross_validation(data, l_folds, K_max, mode):   # führt l-fache Kreuzva
     # Bestimme k mit geringster Fehlerrate
     best_k = min(errors, key=errors.get)
     min_error_rate = errors[best_k] / n
-    return best_k, min_error_rate
+    return best_k, min_error_rate, errors
 
 
 
 
 if __name__ == "__main__":
+    team_number = "2"
     parser = argparse.ArgumentParser(description="KNN Klassifikation")
     parser.add_argument("datasetname", help="Name des Datensatzes")
     parser.add_argument("-f", type=int, default=5, help="Anzahl Folds")
     parser.add_argument("-k", type=int, default=200, help="Maximales k")
-    parser.add_argument("-d", type=int, choices=[0, 1], default=1, help="Modus (0=Zufall, 1=Det)")
+    parser.add_argument("-d", type=int, choices=[0, 1], default=0, help="Modus (0=Zufall, 1=Det)")
     parser.add_argument("-n", type=int, default=None, help="Nur die ersten N Punkte verwenden")
 
     args = parser.parse_args()
 
-    # Automatische PFadkonstruktion
+    # Automatische Pfadkonstruktion
     train_path = f"../classification-data/{args.datasetname}.train.csv"
     test_path = f"../classification-data/{args.datasetname}.test.csv"
 
@@ -96,12 +99,12 @@ if __name__ == "__main__":
     if args.n is not None:
         dataset_train = dataset_train[:args.n]
     dataset_test = load_data(test_path)
-    print(f"Trainingsdatensatz {train_path} geladen. {len(dataset_train)} Punkte.")
-    print(f"Testdatensatz {test_path} geladen. {len(dataset_test)} Punkte.")
+    print(f"Trainingsdatensatz {args.datasetname} mit {len(dataset_train)} Punkten geladen.")
+    print(f"Testdatensatz {args.datasetname} mit {len(dataset_test)} Punkten geladen")
 
     # --- Trainingsphase ---
     start_train = time.time()
-    best_k, best_error = run_cross_validation(dataset_train, args.f, args.k, args.d)
+    best_k, best_error, cv_errors = run_cross_validation(dataset_train, args.f, args.k, args.d)
     end_train = time.time()
     elapsed_train = end_train - start_train
 
@@ -134,3 +137,57 @@ if __name__ == "__main__":
     print(f"Benötigte Testzeit: {elapsed_test:.1f} Sekunden")
     print(f"Bestes k*: {best_k} mit Fehlerrate R_D(k*): {best_error:.3f}")
     print(f"R_D'(f_D): {test_error_rate:.3f}")
+
+    output_dir = "../classification-results"
+    os.makedirs(output_dir, exist_ok=True)
+
+    base_filename = f"team-{team_number}-{args.datasetname}"
+
+    # 1. Result-Datei
+    res_file = os.path.join(output_dir, f"{base_filename}.result.csv")
+    with open(res_file, 'w') as f:
+        for p in predictions:
+            f.write(f"{int(p)}\n")
+    print(f"Vorhersagen gespeichert in: {res_file}")
+
+    # 2. Klassifikations-Logdatei (.log)
+    log_file = os.path.join(output_dir, f"{base_filename}.log")
+    with open(log_file, 'w') as f:
+        # Header (optional, aber gut für Lesbarkeit, falls erlaubt)
+        # Falls striktes Format ohne Header gefordert ist, die nächste Zeile löschen:
+        f.write("# k\terror_rate\n")
+
+        n_train = len(dataset_train)
+        for k_val in range(1, args.k + 1):
+            # Fehlerquote = Anzahl Fehler / Anzahl Trainingsdaten
+            rate = cv_errors[k_val] / n_train
+            f.write(f"{k_val}\t{rate:.6f}\n")
+
+    print(f"Fehlertabelle gespeichert in: {log_file}")
+
+    # 3. Zusammenfassungs-Logdatei (.result.log)
+    summary_log = os.path.join(output_dir, f"{base_filename}.result.log")
+    with open(summary_log, 'w') as f:
+        f.write(f"{elapsed_train:.2f}\n")  # Zeile 1: Trainingszeit
+        f.write(f"{elapsed_test:.2f}\n")  # Zeile 2: Testzeit
+        f.write(f"{best_k}\n")  # Zeile 3: k*
+        f.write(f"{test_error_rate:.6f}\n")  # Zeile 4: Test-Fehlerrate
+
+    # 4. Grafik der Fehlerkurve (log.png)
+    plt.figure(figsize=(10, 6))
+    ks = list(cv_errors.keys())
+    errs = [cv_errors[k]/len(dataset_train) for k in ks]
+
+    plt.plot(ks, errs, label='Risiko $\\tilde{R}_D(k)$')
+    plt.axvline(x=best_k, color='r', linestyle='--', label=f'Bestes k* = {best_k}')
+    # Markierung für den Testfehler (als horizontaler Strich oder Punkt)
+    plt.hlines(test_error_rate, xmin=1, xmax=args.k, color='g',
+               label=f"Testfehler $R_{{D'}}(f_D)$ = {test_error_rate:.3f}")
+
+    plt.xlabel('k')
+    plt.ylabel('Fehlerrate')
+    plt.title(f'Kreuzvalidierung für {args.datasetname}')
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(os.path.join(output_dir, f"{base_filename}.log.png"))
+    plt.close()
