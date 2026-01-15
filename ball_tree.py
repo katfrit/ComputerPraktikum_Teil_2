@@ -1,11 +1,11 @@
 import math
 
 def distance(X, Y):  # euklidische Distanz für zwei Punkte berechnen
-    return math.sqrt(sum((x - y) ** 2 for x, y in zip(X, Y)))
+    return math.sqrt(sum([(x - y) ** 2 for x, y in zip(X, Y)]))
 
 
 class BallTree:
-    def __init__(self, data, leaf_size=10):
+    def __init__(self, data, leaf_size=30):
         self.leaf_size = leaf_size
         self.nodes = []  # Liste zur Speicherung der Baumstruktur
         # Speicherstruktur eines Knotens: (center, radius, left_idx, right_idx, points)
