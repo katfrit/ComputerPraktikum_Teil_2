@@ -1,126 +1,122 @@
 import math
 
-def distance(X, Y):  # euklidische Distanz für zwei Punkte berechnen
-    return math.sqrt(sum([(x - y) ** 2 for x, y in zip(X, Y)]))
+
+def get_dist_sq(X, Y):
+    # Berechnet die quadrierte euklidische Distanz (schneller als mit sqrt)
+    return sum([(x - y) ** 2 for x, y in zip(X, Y)])
 
 
 class BallTree:
-    def __init__(self, data, leaf_size=30):
+    def __init__(self, data, leaf_size=40):
         self.leaf_size = leaf_size
-        self.nodes = []  # Liste zur Speicherung der Baumstruktur
-        # Speicherstruktur eines Knotens: (center, radius, left_idx, right_idx, points)
+        self.nodes = []
+        # root_idx speichert den Einstiegspunkt
         self.root_idx = self._build_iterative(data)
 
-    def _build_iterative(self, data):  # erstellt Ball-Tree iterativ mittels eines Stacks
-        if not data:
-            return None
-
-        # Liste aller Knoten
+    def _build_iterative(self, data):
+        if not data: return None
         self.nodes = []
-
         root_placeholder_idx = 0
-        # Stack speichert Daten aus: Datenmenge, Ziel-Index in Knotenliste
         stack = [(data, root_placeholder_idx)]
-
-        # Platzhalter für Wurzelknoten erstellen
         self.nodes.append({})
 
         while stack:
             current_data, node_idx = stack.pop()
-
-            # Zentrum und Radius berechnen
             points_coords = [p[1] for p in current_data]
-            center = self._compute_center(points_coords)
-            radius = max(distance(p[1], center) for p in current_data)
 
-            # Abbruchbedingung: Wenn Datenmenge klein genug --> Blattknoten erstellen
+            # Mittelpunkt berechnen
+            n_points = len(points_coords)
+            dim = len(points_coords[0])
+            center = [sum(p[i] for p in points_coords) / n_points for i in range(dim)]
+
+            # Radius QUADRIERT berechnen
+            max_dist_sq = 0.0
+            for p_coords in points_coords:
+                d_sq = sum([(p_coords[i] - center[i]) ** 2 for i in range(dim)])
+                if d_sq > max_dist_sq: max_dist_sq = d_sq
+
             if len(current_data) <= self.leaf_size:
                 self.nodes[node_idx] = {
                     'center': center,
-                    'radius': radius,
-                    'points': current_data,  # Enthält (label, coords)
-                    'left': None,
-                    'right': None
+                    'radius_sq': max_dist_sq,
+                    'points': current_data,
+                    'left': None, 'right': None
                 }
             else:
-                # Splitting-Heuristik: Finde zwei weit entfernte Pole (p1, p2)
-                p1 = max(current_data, key=lambda p: distance(p[1], center))
-                p2 = max(current_data, key=lambda p: distance(p[1], p1[1]))
+                # Splitting nach der Dimension mit dem größten Spread
+                best_dim = 0
+                max_spread = -1
+                for d in range(dim):
+                    vals = [p[d] for p in points_coords]
+                    spread = max(vals) - min(vals)
+                    if spread > max_spread:
+                        max_spread = spread
+                        best_dim = d
 
-                # Punkte dem näheren Pol zuordnen
-                left_data, right_data = [], []
-                for p in current_data:
-                    if distance(p[1], p1[1]) < distance(p[1], p2[1]):
-                        left_data.append(p)
-                    else:
-                        right_data.append(p)
+                current_data.sort(key=lambda x: x[1][best_dim])
+                mid = n_points // 2
 
-                # Indizes für Kinderknoten am Listenende reservieren
-                left_idx = len(self.nodes)
-                right_idx = len(self.nodes) + 1
-                self.nodes.append({})  # für left
-                self.nodes.append({})  # für right
+                l_idx, r_idx = len(self.nodes), len(self.nodes) + 1
+                self.nodes.extend([{}, {}])
 
-                # Aktuellen Knoten als inneren Knoten (Verzweigung) speichern
                 self.nodes[node_idx] = {
-                    'center': center,
-                    'radius': radius,
-                    'points': None,
-                    'left': left_idx,
-                    'right': right_idx
+                    'center': center, 'radius_sq': max_dist_sq,
+                    'points': None, 'left': l_idx, 'right': r_idx
                 }
-
-                # Kinder auf Stack legen
-                stack.append((right_data, right_idx))
-                stack.append((left_data, left_idx))
-
+                stack.append((current_data[mid:], r_idx))
+                stack.append((current_data[:mid], l_idx))
         return root_placeholder_idx
 
-    def _compute_center(self, points):
-        # Mittelpunkt der Punktemenge berechnen
-        d = len(points[0])
-        n = len(points)
-        return [sum(p[i] for p in points) / n for i in range(d)]
-
     def query(self, target, k):
-        # Sucht k nächsten Nachbarn mittels Pruning
         if self.root_idx is None: return []
 
-        neighbors = []  # Liste von (distanz, label), wird sortiert gehalten
+        neighbors = []  # Speichert (dist_sq, label)
         stack = [self.root_idx]
+
+        # Lokale Referenz für schnelleren Zugriff in der Schleife
+        nodes = self.nodes
+        target_indices = range(len(target))
 
         while stack:
             idx = stack.pop()
-            node = self.nodes[idx]
-            dist_to_center = distance(target, node['center'])
+            node = nodes[idx]
 
-            # Pruning: Wenn Zielpunkt zu weit von Kugel weg (weiter als der schlechteste der k besten Nachbarn)
-            # neighbors[-1][0] ist die größte Distanz in der sortierten Liste
-            if len(neighbors) == k and dist_to_center - node['radius'] >= neighbors[-1][0]:
-                continue
+            center = node['center']
+            # Quadrierte Distanz zum Kugel-Zentrum
+            d_sq_to_center = sum([(target[i] - center[i]) ** 2 for i in target_indices])
 
-            if node['points'] is not None:  # Blattknoten
+            # Pruning mit Quadraten (Wurzel nur wenn absolut nötig)
+            if len(neighbors) == k:
+                max_d_sq = neighbors[-1][0]
+                # Mathematische Pruning-Bedingung: dist - radius >= max_d
+                # Da wir Quadrate haben: sqrt(d_sq_to_center) - sqrt(radius_sq) >= sqrt(max_d_sq)
+                radius = math.sqrt(node['radius_sq'])
+                if math.sqrt(d_sq_to_center) - radius >= math.sqrt(max_d_sq):
+                    continue
+
+            if node['points'] is not None:
+                # Blattknoten: Punkte prüfen
                 for label, coords in node['points']:
-                    d = distance(target, coords)
+                    d_sq = sum([(target[i] - coords[i]) ** 2 for i in target_indices])
 
                     if len(neighbors) < k:
-                        neighbors.append((d, label))
-                        neighbors.sort(key=lambda x: x[0])  # Liste sortieren
-                    elif d < neighbors[-1][0]:
-                        neighbors[-1] = (d, label)  # Schlechtesten Nachbarn ersetzen
-                        neighbors.sort(key=lambda x: x[0])  # Liste wieder sortieren
+                        neighbors.append((d_sq, label))
+                        if len(neighbors) == k: neighbors.sort(key=lambda x: x[0])
+                    elif d_sq < neighbors[-1][0]:
+                        neighbors[-1] = (d_sq, label)
+                        neighbors.sort(key=lambda x: x[0])
+            else:
+                # Innerer Knoten: Heuristik für Kinder-Besuch
+                l_idx, r_idx = node['left'], node['right']
+                c_l, c_r = nodes[l_idx]['center'], nodes[r_idx]['center']
+                d_l = sum([(target[i] - c_l[i]) ** 2 for i in target_indices])
+                d_r = sum([(target[i] - c_r[i]) ** 2 for i in target_indices])
 
-            else:  # Innerer Knoten
-                left = self.nodes[node['left']]
-                right = self.nodes[node['right']]
-
-                # Heuristik: Kugel zuerst besuchen, deren Zentrum näher liegt
-                if distance(target, left['center']) < distance(target, right['center']):
-                    stack.append(node['right'])
-                    stack.append(node['left'])
+                if d_l < d_r:
+                    stack.append(r_idx);
+                    stack.append(l_idx)
                 else:
-                    stack.append(node['left'])
-                    stack.append(node['right'])
+                    stack.append(l_idx);
+                    stack.append(r_idx)
 
-        # Gib nur die Labels zurück
         return [n[1] for n in neighbors]
