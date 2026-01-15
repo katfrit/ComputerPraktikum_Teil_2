@@ -1,16 +1,17 @@
 import math
 
-def distance(X, Y): #euklidische Distanz für zwei Punkte berechnen
-    return math.sqrt(sum((x - y)**2 for x, y in zip(X, Y)))
+def distance(X, Y):  # euklidische Distanz für zwei Punkte berechnen
+    return math.sqrt(sum((x - y) ** 2 for x, y in zip(X, Y)))
+
 
 class BallTree:
     def __init__(self, data, leaf_size=10):
         self.leaf_size = leaf_size
-        self.nodes = [] # Liste zur Speicherung der Baumstruktur
+        self.nodes = []  # Liste zur Speicherung der Baumstruktur
         # Speicherstruktur eines Knotens: (center, radius, left_idx, right_idx, points)
         self.root_idx = self._build_iterative(data)
 
-    def _build_iterative(self, data):   # erstellt Ball-Tree iterativ mittels eines Stacks
+    def _build_iterative(self, data):  # erstellt Ball-Tree iterativ mittels eines Stacks
         if not data:
             return None
 
@@ -84,31 +85,32 @@ class BallTree:
     def query(self, target, k):
         # Sucht k nächsten Nachbarn mittels Pruning
         if self.root_idx is None: return []
-        
-        neighbors = [] # Liste von (distanz, label)
+
+        neighbors = []  # Liste von (distanz, label), wird sortiert gehalten
         stack = [self.root_idx]
-        
+
         while stack:
             idx = stack.pop()
             node = self.nodes[idx]
-            
             dist_to_center = distance(target, node['center'])
-            
-            # Pruning: Wenn Zielpunkt zu weit von Kugel weg, können darin keine besseren Nachbarn mehr liegen
-            if len(neighbors) == k and dist_to_center - node['radius'] >= max(neighbors)[0]:
+
+            # Pruning: Wenn Zielpunkt zu weit von Kugel weg (weiter als der schlechteste der k besten Nachbarn)
+            # neighbors[-1][0] ist die größte Distanz in der sortierten Liste
+            if len(neighbors) == k and dist_to_center - node['radius'] >= neighbors[-1][0]:
                 continue
-                
-            if node['points'] is not None: # Blattknoten
+
+            if node['points'] is not None:  # Blattknoten
                 for label, coords in node['points']:
                     d = distance(target, coords)
-                    # Erhalte Top-K der bisher nächsten Punkte
+
                     if len(neighbors) < k:
                         neighbors.append((d, label))
-                        neighbors.sort()
+                        neighbors.sort(key=lambda x: x[0])  # Liste sortieren
                     elif d < neighbors[-1][0]:
-                        neighbors[-1] = (d, label)
-                        neighbors.sort()
-            else: # Innerer Knoten
+                        neighbors[-1] = (d, label)  # Schlechtesten Nachbarn ersetzen
+                        neighbors.sort(key=lambda x: x[0])  # Liste wieder sortieren
+
+            else:  # Innerer Knoten
                 left = self.nodes[node['left']]
                 right = self.nodes[node['right']]
 
@@ -119,5 +121,6 @@ class BallTree:
                 else:
                     stack.append(node['left'])
                     stack.append(node['right'])
-                    
+
+        # Gib nur die Labels zurück
         return [n[1] for n in neighbors]
