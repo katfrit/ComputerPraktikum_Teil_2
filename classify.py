@@ -3,7 +3,7 @@ import sys
 import os
 import argparse
 import random
-from ball_tree import BallTree, distance
+from ball_tree import BallTree, get_dist_sq
 import time
 import matplotlib.pyplot as plt
 
@@ -30,7 +30,7 @@ def load_data(filename):
 
 def predict_naive(target_x, train_data, k):
     # Naive KNN-Implementierung zum Vgl oder Validierung
-    dists = [(distance(target_x, x), y) for y, x in train_data]
+    dists = [(get_dist_sq(target_x, x), y) for y, x in train_data]
     dists.sort()
     k_nearest = dists[:k]
     # Signum der Summe: >=0 wird zu 1.0, <0 zu -1.0
