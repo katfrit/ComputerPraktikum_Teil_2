@@ -3,15 +3,15 @@ import math
 
 class BallTree:
     def __init__(self, data):
-        # Blattgröße wie in deinem effizienten Original
-        self.leaf_size = max(40, min(200, len(data) // 100))
+        # Adaptive Blattgröße: verhindert zu tiefe Bäume bei großen Datenmengen
+        self.leaf_size = max(40, min(400, len(data) // 100))
         self.nodes = []
         self.root_idx = self._build_iterative(data)
 
     def _build_iterative(self, data):
         if not data: return None
         self.nodes = []
-        stack = [(data, 0)]
+        stack = [(data, 0)] # iterativer Aufbau verhindert Overflow bei großen Tiefen
         self.nodes.append({})
 
         while stack:
@@ -20,20 +20,26 @@ class BallTree:
             n_points = len(points_coords)
             dim = len(points_coords[0])
 
+            # Schwerpunktsberechnung als Kugelzentrum
             center = [sum(p[i] for p in points_coords) / n_points for i in range(dim)]
+
+            # Bestimmung des Radius (max Distanz zum Zentrum)
             max_dist_sq = 0.0
             for p_coords in points_coords:
                 d_sq = sum((p_coords[i] - center[i]) ** 2 for i in range(dim))
                 if d_sq > max_dist_sq: max_dist_sq = d_sq
 
+            # einmalig Wurzel zum Build berechnen (statt in jeder Query)
             radius_val = math.sqrt(max_dist_sq)
 
             if n_points <= self.leaf_size:
+                # Blattknoten speichern tatsächliche Datenpunkte
                 self.nodes[node_idx] = {
                     'center': center, 'radius_sq': max_dist_sq, 'radius': radius_val,
                     'points': current_data, 'left': None, 'right': None
                 }
             else:
+                # Split-Dimension: Dimension mit größter Ausdehnung nehmen
                 best_dim = 0
                 max_spread = -1
                 for d in range(dim):
@@ -43,6 +49,7 @@ class BallTree:
                         max_spread = spread
                         best_dim = d
 
+                # Split nach Median für balancierten Baum
                 current_data.sort(key=lambda x: x[1][best_dim])
                 mid = n_points // 2
                 l_idx, r_idx = len(self.nodes), len(self.nodes) + 1
@@ -57,7 +64,7 @@ class BallTree:
 
     def query(self, target, k):
         if not self.nodes: return []
-        neighbors = []  # (dist_sq, label)
+        neighbors = []  # speichert (dist_sq, label)
         stack = [0]
         nodes = self.nodes
         dim_range = range(len(target))
@@ -66,18 +73,21 @@ class BallTree:
             idx = stack.pop()
             node = nodes[idx]
             center = node['center']
+
+            # Quadrierte Distanz zum Zentrum (Wurzelberechnung vermeiden)
             d_sq_to_center = sum((target[i] - center[i]) ** 2 for i in dim_range)
 
-            # Pruning
+            # Pruning mittels Dreiecksungleichung
             if len(neighbors) == k:
                 d_max_sq = neighbors[-1][0]
                 d_max = math.sqrt(d_max_sq)
 
-                # Binomische Formel: (r + d_max)^2 = r^2 + d_max^2 + 2 * r * d_max
+                # Binomische Optimierung: (r + d_max)^2 = r^2 + d_max^2 + 2*r*d_max
                 if d_sq_to_center > (node['radius_sq'] + d_max_sq + 2 * node['radius'] * d_max):
                     continue
 
             if node['points'] is not None:
+                # Lineare Suche innerhalb Blattknoten
                 for label, coords in node['points']:
                     d_sq = sum((target[i] - coords[i]) ** 2 for i in dim_range)
                     if len(neighbors) < k:
