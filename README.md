@@ -70,3 +70,23 @@ python classify.py -f 2 -k 5 -n 100 classification_data/bananas-1-2d.train.csv
 - Perform naive kNN classification
 - Compute average cross-validation error for each k
 - Print diagnostic output for reproducibility
+
+## Project Run-Time 
+
+| Data Set                      | Steinwart Run Time (in s)   | Own Run Time (in s)
+| ------------------------------|-----------------------------|--------------------
+| bananas-1-2d
+| bananas-2-2d
+| bananas-5-2d
+| bananas-1-4d
+| bananas-2-4d
+| bananas-5-4d
+| crosses-2d
+| toy-2d
+| toy-3d
+| toy-4d
+| toy-10d
+| phishing.small
+| magic_gamma_telescope.small
+| cod-rna.small
+| covtype.small
