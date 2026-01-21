@@ -73,7 +73,7 @@ python classify.py -f 2 -k 5 -n 100 classification_data/bananas-1-2d.train.csv
 
 ## Project Run-Time 
 
-| Data Set                      | Steinwart Run Time (in s)   | Own Run Time on Laptop (in s)
+| Data Set                      | Steinwart Run Time (in s)   | Own Run Time on Laptop (in s) with leaf_size = 40
 | ------------------------------|-----------------------------|--------------------
 | bananas-1-2d                  | 18,48                       | 9,6
 | bananas-2-2d                  | 18,22                       | 11,2
@@ -85,8 +85,8 @@ python classify.py -f 2 -k 5 -n 100 classification_data/bananas-1-2d.train.csv
 | toy-2d                        | 14,28                       | 10
 | toy-3d                        | 15,93                       | 14,6
 | toy-4d                        | 22,41                       | 15,1
-| toy-10d                       | 36,13                       | 27,3 (22s with leaf_size = 40)
+| toy-10d                       | 36,13                       | 22
 | phishing.small                | 484,22                      | 442,7
-| magic_gamma_telescope.small   | 196,19                      | 162,8
+| magic_gamma_telescope.small   | 196,19                      | 138,1
 | cod-rna.small                 | 391,1                       | 376,7
 | covtype.small                 | 1000 (exit)                 | 2344
