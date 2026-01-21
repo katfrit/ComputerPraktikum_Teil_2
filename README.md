@@ -75,18 +75,18 @@ python classify.py -f 2 -k 5 -n 100 classification_data/bananas-1-2d.train.csv
 
 | Data Set                      | Steinwart Run Time (in s)   | Own Run Time (in s)
 | ------------------------------|-----------------------------|--------------------
-| bananas-1-2d
-| bananas-2-2d
-| bananas-5-2d
-| bananas-1-4d
-| bananas-2-4d
-| bananas-5-4d
-| crosses-2d
-| toy-2d
-| toy-3d
-| toy-4d
-| toy-10d
-| phishing.small
-| magic_gamma_telescope.small
-| cod-rna.small
-| covtype.small
+| bananas-1-2d                  | 18,48
+| bananas-2-2d                  | 18,22
+| bananas-5-2d                  | 20,55
+| bananas-1-4d                  | 22,34
+| bananas-2-4d                  | 25,43
+| bananas-5-4d                  | 28,56
+| crosses-2d                    | 14,18
+| toy-2d                        | 14,28
+| toy-3d                        | 15,93
+| toy-4d                        | 22,41
+| toy-10d                       | 36,13
+| phishing.small                | 484,22
+| magic_gamma_telescope.small   | 196,19
+| cod-rna.small                 | 391,1
+| covtype.small                 | 1000
