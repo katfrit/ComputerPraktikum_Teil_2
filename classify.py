@@ -29,10 +29,11 @@ def run_cross_validation(data, l_folds, K_max, mode):
     if mode != 1: random.shuffle(data)
     folds = [data[i::l_folds] for i in range(l_folds)]
 
-    # Speed-Optimization: Überspringen nur bei sehr großen Daten
+    # Adaptive Optimierung für gr0ße Datensätze (Sampling der k-Werte)
     use_step = n > 30000
     k_to_check = set(range(1, K_max + 1))
     if use_step:
+        # feingranular bei kleinen k, grober bei großen k (da stabiler)
         k_to_check = set(list(range(1, 21)) + list(range(25, K_max + 1, 5)))
         if K_max not in k_to_check: k_to_check.add(K_max)
 
@@ -47,18 +48,21 @@ def run_cross_validation(data, l_folds, K_max, mode):
         tree = BallTree(train_set)
 
         for y_true, x_test in test_set:
+            # alle k_max Nachbarn einmalig abholen
             neighbors = tree.query(x_test, K_max)
-            # Running Sum für O(k) statt O(k^2)
+            # Running Sum Optimierung: Berechnet alle k in O(k_max) statt O(K_max^2)
             current_sum = 0
             for idx, label in enumerate(neighbors):
                 k = idx + 1
                 current_sum += label
                 if k in k_to_check:
+                    # Klassifikationsunterscheidung
                     y_pred = 1.0 if current_sum >= 0 else -1.0
                     if y_pred != y_true:
                         errors[k] += 1
 
-    if use_step:  # Lücken im Dictionary für das .log File füllen
+    if use_step:
+        # Lineare Interpolation der Fehlerraten für log-Datei
         s_ks = sorted(list(k_to_check))
         for idx in range(len(s_ks) - 1):
             for fill in range(s_ks[idx] + 1, s_ks[idx + 1]):
@@ -153,12 +157,12 @@ if __name__ == "__main__":
     plt.axvline(x=best_k, color='r', linestyle='--', label=f'Bestes k* = {best_k}')
     plt.hlines(test_error_rate, xmin=1, xmax=args.k, color='g',
                label=f"Testfehler $R_{{D'}}(f_D)$ = {test_error_rate:.3f}")
-    plt.xlabel('k');
-    plt.ylabel('Fehlerrate');
+    plt.xlabel('k')
+    plt.ylabel('Fehlerrate')
     plt.title(f'Kreuzvalidierung für {args.datasetname}')
-    plt.legend();
+    plt.legend()
     plt.grid(True)
-    plt.savefig(os.path.join(output_dir, f"{base_filename}.log.png"));
+    plt.savefig(os.path.join(output_dir, f"{base_filename}.log.png"))
     plt.close()
 
     # 5. Visualisierung für d = 2
@@ -173,12 +177,12 @@ if __name__ == "__main__":
         x_neg_2 = [p[1][1] for p in dataset_train if p[0] == -1.0]
         plt.scatter(x_pos_1, x_pos_2, c='blue', marker='o', label='Klasse +1 (wahr)', s=20, alpha=0.7)
         plt.scatter(x_neg_1, x_neg_2, c='red', marker='x', label='Klasse -1 (wahr)', s=20, alpha=0.7)
-        plt.title(f"Trainingsdaten D: {args.datasetname}");
-        plt.xlabel("$x_1$");
+        plt.title(f"Trainingsdaten D: {args.datasetname}")
+        plt.xlabel("$x_1$")
         plt.ylabel("$x_2$")
-        plt.legend();
+        plt.legend()
         plt.grid(True, linestyle='--', alpha=0.6)
-        plt.savefig(os.path.join(output_dir, f"{base_filename}.train.png"));
+        plt.savefig(os.path.join(output_dir, f"{base_filename}.train.png"))
         plt.close()
 
         # Result Plot
@@ -189,12 +193,12 @@ if __name__ == "__main__":
         x_pred_neg_2 = [dataset_test[i][1][1] for i in range(len(dataset_test)) if predictions[i] == -1.0]
         plt.scatter(x_pred_pos_1, x_pred_pos_2, c='dodgerblue', marker='o', label='Vorhersage +1', s=20, alpha=0.6)
         plt.scatter(x_pred_neg_1, x_pred_neg_2, c='tomato', marker='x', label='Vorhersage -1', s=20, alpha=0.6)
-        plt.title(f"Klassifikationsergebnis $f_D$ (k={best_k})");
-        plt.xlabel("$x_1'$");
+        plt.title(f"Klassifikationsergebnis $f_D$ (k={best_k})")
+        plt.xlabel("$x_1'$")
         plt.ylabel("$x_2'$")
-        plt.legend();
+        plt.legend()
         plt.grid(True, linestyle='--', alpha=0.6)
-        plt.savefig(os.path.join(output_dir, f"{base_filename}.result.png"));
+        plt.savefig(os.path.join(output_dir, f"{base_filename}.result.png"))
         plt.close()
     else:
         print(f"Dimension ist d={current_dimension}. Überspringe 2D-Visualisierung.")
