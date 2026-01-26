@@ -76,11 +76,11 @@ python classify.py -f 2 -k 5 -n 100 classification_data/bananas-1-2d.train.csv
 | Data Set                      | Steinwart Run Time (in s)   | Lars Run Time (in s, with ball_tree @Joern
 | ------------------------------|-----------------------------|--------------------
 | bananas-1-2d                  | 18,48                       | 8,3
-| bananas-2-2d                  | 18,22                       | 10,2
-| bananas-5-2d                  | 20,55                       | 11,4
-| bananas-1-4d                  | 22,34                       | 12
-| bananas-2-4d                  | 25,43                       | 15,6
-| bananas-5-4d                  | 28,56                       | 15,1 (13,8)
+| bananas-2-2d                  | 18,22                       | 9,6
+| bananas-5-2d                  | 20,55                       | 11,0
+| bananas-1-4d                  | 22,34                       | 11,9
+| bananas-2-4d                  | 25,43                       | 12,9
+| bananas-5-4d                  | 28,56                       | 15,1
 | crosses-2d                    | 14,18                       | 9,4
 | toy-2d                        | 14,28                       | 10
 | toy-3d                        | 15,93                       | 14,6
@@ -89,4 +89,4 @@ python classify.py -f 2 -k 5 -n 100 classification_data/bananas-1-2d.train.csv
 | phishing.small                | 484,22                      | 370
 | magic_gamma_telescope.small   | 196,19                      | 115,8
 | cod-rna.small                 | 391,1                       | 160,9
-| covtype.small                 | 1000 (exit)                 | 2344
+| covtype.small                 | 1000 (exit)                 | 1175
