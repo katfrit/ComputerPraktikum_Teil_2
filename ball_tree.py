@@ -2,69 +2,53 @@ import math
 
 
 class BallTree:
-    def __init__(self, data):
-        # Adaptive Blattgröße: verhindert zu tiefe Bäume bei großen Datenmengen
-        self.leaf_size = max(40, min(400, len(data) // 100))
+    def __init__(self, data, leaf_size=40):
+        self.leaf_size = leaf_size
         self.nodes = []
-        self.root_idx = self._build_iterative(data)
+        self._build_iterative(data)
 
     def _build_iterative(self, data):
         if not data: return None
         self.nodes = []
-        stack = [(data, 0)] # iterativer Aufbau verhindert Overflow bei großen Tiefen
+        stack = [(data, 0)]
         self.nodes.append({})
 
         while stack:
             current_data, node_idx = stack.pop()
             points_coords = [p[1] for p in current_data]
-            n_points = len(points_coords)
-            dim = len(points_coords[0])
 
-            # Schwerpunktsberechnung als Kugelzentrum
-            center = [sum(p[i] for p in points_coords) / n_points for i in range(dim)]
+            # determine center and radius
+            center = [coord / len(points_coords) for coord in [sum(components) for components in zip(*points_coords)]]
+            radius = max(math.sqrt(sum((x - y) ** 2 for x, y in zip(point, center))) for point in points_coords)
 
-            # Bestimmung des Radius (max Distanz zum Zentrum)
-            max_dist_sq = 0.0
-            for p_coords in points_coords:
-                d_sq = sum((p_coords[i] - center[i]) ** 2 for i in range(dim))
-                if d_sq > max_dist_sq: max_dist_sq = d_sq
-
-            # einmalig Wurzel zum Build berechnen (statt in jeder Query)
-            radius_val = math.sqrt(max_dist_sq)
-
-            if n_points <= self.leaf_size:
-                # Blattknoten speichern tatsächliche Datenpunkte
-                self.nodes[node_idx] = {
-                    'center': center, 'radius_sq': max_dist_sq, 'radius': radius_val,
-                    'points': current_data, 'left': None, 'right': None
-                }
+            if len(points_coords) <= self.leaf_size:
+                # save actual data
+                self.nodes[node_idx] = {'center': center, 'radius': radius, 'points': current_data, 'left': None,
+                                        'right': None}
             else:
-                # Split-Dimension: Dimension mit größter Ausdehnung nehmen
-                best_dim = 0
-                max_spread = -1
-                for d in range(dim):
-                    vals = [p[d] for p in points_coords]
-                    spread = max(vals) - min(vals)
-                    if spread > max_spread:
-                        max_spread = spread
-                        best_dim = d
+                p1 = max(points_coords, key=lambda Y: sum((x - y) ** 2 for x, y in zip(points_coords[0], Y)))
+                p2 = max(points_coords, key=lambda Y: sum((x - y) ** 2 for x, y in zip(p1, Y)))
 
-                # Split nach Median für balancierten Baum
-                current_data.sort(key=lambda x: x[1][best_dim])
-                mid = n_points // 2
+                left_data, right_data = [], []
+
+                for data in current_data:
+                    if math.sqrt(sum((x - y) ** 2 for x, y in zip(data[1], p1))) <= math.sqrt(
+                            sum((x - y) ** 2 for x, y in zip(data[1], p2))):
+                        left_data.append(data)
+                    else:
+                        right_data.append(data)
+
                 l_idx, r_idx = len(self.nodes), len(self.nodes) + 1
                 self.nodes.extend([{}, {}])
-                self.nodes[node_idx] = {
-                    'center': center, 'radius_sq': max_dist_sq, 'radius': radius_val,
-                    'points': None, 'left': l_idx, 'right': r_idx
-                }
-                stack.append((current_data[mid:], r_idx))
-                stack.append((current_data[:mid], l_idx))
-        return 0
+                self.nodes[node_idx] = {'center': center, 'radius': radius, 'points': None, 'left': l_idx,
+                                        'right': r_idx}
+
+                stack.append((right_data, r_idx))
+                stack.append((left_data, l_idx))
 
     def query(self, target, k):
         if not self.nodes: return []
-        neighbors = []  # speichert (dist_sq, label)
+        neighbors = []  # saves knn according to (dist_sq, label)
         stack = [0]
         nodes = self.nodes
         dim_range = range(len(target))
@@ -72,40 +56,35 @@ class BallTree:
         while stack:
             idx = stack.pop()
             node = nodes[idx]
-            center = node['center']
 
-            # Quadrierte Distanz zum Zentrum (Wurzelberechnung vermeiden)
-            d_sq_to_center = sum((target[i] - center[i]) ** 2 for i in dim_range)
+            distance_to_center = math.sqrt(sum((x - y) ** 2 for x, y in zip(target, node['center'])))
 
-            # Pruning mittels Dreiecksungleichung
-            if len(neighbors) == k:
-                d_max_sq = neighbors[-1][0]
-                d_max = math.sqrt(d_max_sq)
+            # check pruning condition
+            if len(neighbors) == k and distance_to_center > node['radius'] + math.sqrt(neighbors[-1][0]):
+                continue
 
-                # Binomische Optimierung: (r + d_max)^2 = r^2 + d_max^2 + 2*r*d_max
-                if d_sq_to_center > (node['radius_sq'] + d_max_sq + 2 * node['radius'] * d_max):
-                    continue
+
 
             if node['points'] is not None:
-                # Lineare Suche innerhalb Blattknoten
-                for label, coords in node['points']:
-                    d_sq = sum((target[i] - coords[i]) ** 2 for i in dim_range)
-                    if len(neighbors) < k:
+                for label, coord in node['points']:
+                    d_sq = sum((x - y) ** 2 for x, y in zip(target, coord))
+                    if len(neighbors) < k - 1:
                         neighbors.append((d_sq, label))
-                        if len(neighbors) == k: neighbors.sort()
+                    elif len(neighbors) == k - 1:
+                        neighbors.append((d_sq, label))
+                        neighbors.sort()
                     elif d_sq < neighbors[-1][0]:
                         neighbors[-1] = (d_sq, label)
                         neighbors.sort()
+
+
             else:
-                # Optimierung: Zuerst in das Kind gehen, das dem Target näher ist
+                # search closer child first
                 l_child = nodes[node['left']]
                 r_child = nodes[node['right']]
 
-                # Wir schätzen, welches Zentrum näher liegt
-                d_l = sum((target[i] - l_child['center'][i]) ** 2 for i in dim_range)
-                d_r = sum((target[i] - r_child['center'][i]) ** 2 for i in dim_range)
-
-                if d_l < d_r:
+                if sum((x - y) ** 2 for x, y in zip(target, l_child['center'])) < sum(
+                        (x - y) ** 2 for x, y in zip(target, r_child['center'])):
                     stack.append(node['right'])
                     stack.append(node['left'])
                 else:

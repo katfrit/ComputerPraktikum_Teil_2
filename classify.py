@@ -13,11 +13,12 @@ def load_data(filename):
     try:
         with open(filename, 'r') as f:
             for line in f:
-                parts = line.replace(',', ' ').split()
-                if not parts: continue
-                y = float(parts[0])
-                x = [float(val) for val in parts[1:]]
-                data.append((y, x))
+                if not line.strip(): continue
+                # Direkter Split am Komma ist viel schneller
+                parts = line.split(',')
+                # y (Label) ist das erste Element, der Rest sind x (Koordinaten)
+                # map(float, ...) ist eine C-Funktion und viel schneller als List Comp
+                data.append((float(parts[0]), list(map(float, parts[1:]))))
     except Exception as e:
         print(f"Fehler beim Laden: {e}")
         sys.exit(1)
@@ -29,7 +30,7 @@ def run_cross_validation(data, l_folds, K_max, mode):
     if mode != 1: random.shuffle(data)
     folds = [data[i::l_folds] for i in range(l_folds)]
 
-    # Adaptive Optimierung für gr0ße Datensätze (Sampling der k-Werte)
+    # Adaptive Optimierung für große Datensätze (Sampling der k-Werte)
     use_step = n > 30000
     k_to_check = set(range(1, K_max + 1))
     if use_step:
@@ -91,8 +92,8 @@ if __name__ == "__main__":
     if args.n is not None:
         dataset_train = dataset_train[:args.n]
     dataset_test = load_data(test_path)
-    print(f"Trainingsdatensatz {args.datasetname} mit {len(dataset_train)} Punkten geladen.")
-    print(f"Testdatensatz {args.datasetname} mit {len(dataset_test)} Punkten geladen")
+    #print(f"Trainingsdatensatz {args.datasetname} mit {len(dataset_train)} Punkten geladen.")
+    #print(f"Testdatensatz {args.datasetname} mit {len(dataset_test)} Punkten geladen")
 
     # --- Trainingsphase ---
     start_train = time.perf_counter()
@@ -118,9 +119,9 @@ if __name__ == "__main__":
 
     # --- Ausgabe ---
     print(f"Benötigte Trainingszeit: {elapsed_train:.1f} Sekunden")
-    print(f"Benötigte Testzeit: {elapsed_test:.1f} Sekunden")
+    #print(f"Benötigte Testzeit: {elapsed_test:.1f} Sekunden")
     print(f"Bestes k*: {best_k} mit Fehlerrate R_D(k*): {best_error:.3f}")
-    print(f"R_D'(f_D): {test_error_rate:.3f}")
+    #print(f"R_D'(f_D): {test_error_rate:.3f}")
 
     output_dir = "../classification-results"
     os.makedirs(output_dir, exist_ok=True)
@@ -130,7 +131,7 @@ if __name__ == "__main__":
     res_file = os.path.join(output_dir, f"{base_filename}.result.csv")
     with open(res_file, 'w') as f:
         for p in predictions: f.write(f"{int(p)}\n")
-    print(f"Vorhersagen gespeichert in: {res_file}")
+    #print(f"Vorhersagen gespeichert in: {res_file}")
 
     # 2. Klassifikations-Logdatei (.log)
     log_file = os.path.join(output_dir, f"{base_filename}.log")
@@ -139,7 +140,7 @@ if __name__ == "__main__":
         for k_val in range(1, args.k + 1):
             rate = cv_errors[k_val] / n_train
             f.write(f"{k_val}\t{rate:.6f}\n")
-    print(f"Fehlertabelle gespeichert in: {log_file}")
+    #print(f"Fehlertabelle gespeichert in: {log_file}")
 
     # 3. Zusammenfassungs-Logdatei (.result.log)
     summary_log = os.path.join(output_dir, f"{base_filename}.result.log")
@@ -169,36 +170,63 @@ if __name__ == "__main__":
     current_dimension = len(dataset_train[0][1])
     if current_dimension == 2:
         print(f"Dimension d=2 erkannt. Erstelle Visualisierungen für {args.datasetname}...")
-        # Train Plot
-        plt.figure(figsize=(8, 6))
-        x_pos_1 = [p[1][0] for p in dataset_train if p[0] == 1.0]
-        x_pos_2 = [p[1][1] for p in dataset_train if p[0] == 1.0]
-        x_neg_1 = [p[1][0] for p in dataset_train if p[0] == -1.0]
-        x_neg_2 = [p[1][1] for p in dataset_train if p[0] == -1.0]
-        plt.scatter(x_pos_1, x_pos_2, c='blue', marker='o', label='Klasse +1 (wahr)', s=20, alpha=0.7)
-        plt.scatter(x_neg_1, x_neg_2, c='red', marker='x', label='Klasse -1 (wahr)', s=20, alpha=0.7)
-        plt.title(f"Trainingsdaten D: {args.datasetname}")
-        plt.xlabel("$x_1$")
-        plt.ylabel("$x_2$")
-        plt.legend()
-        plt.grid(True, linestyle='--', alpha=0.6)
-        plt.savefig(os.path.join(output_dir, f"{base_filename}.train.png"))
-        plt.close()
 
-        # Result Plot
-        plt.figure(figsize=(8, 6))
-        x_pred_pos_1 = [dataset_test[i][1][0] for i in range(len(dataset_test)) if predictions[i] == 1.0]
-        x_pred_pos_2 = [dataset_test[i][1][1] for i in range(len(dataset_test)) if predictions[i] == 1.0]
-        x_pred_neg_1 = [dataset_test[i][1][0] for i in range(len(dataset_test)) if predictions[i] == -1.0]
-        x_pred_neg_2 = [dataset_test[i][1][1] for i in range(len(dataset_test)) if predictions[i] == -1.0]
-        plt.scatter(x_pred_pos_1, x_pred_pos_2, c='dodgerblue', marker='o', label='Vorhersage +1', s=20, alpha=0.6)
-        plt.scatter(x_pred_neg_1, x_pred_neg_2, c='tomato', marker='x', label='Vorhersage -1', s=20, alpha=0.6)
-        plt.title(f"Klassifikationsergebnis $f_D$ (k={best_k})")
-        plt.xlabel("$x_1'$")
-        plt.ylabel("$x_2'$")
-        plt.legend()
-        plt.grid(True, linestyle='--', alpha=0.6)
-        plt.savefig(os.path.join(output_dir, f"{base_filename}.result.png"))
-        plt.close()
-    else:
-        print(f"Dimension ist d={current_dimension}. Überspringe 2D-Visualisierung.")
+
+        # --- Hilfsfunktion für zufälliges Plotten ---
+        def plot_shuffled(data, labels, title, filename):
+            plt.figure(figsize=(8, 6))
+
+            # 1. Daten und Labels zusammenführen
+            # Wir bauen eine Liste aus Tupeln: (x1, x2, label)
+            plot_data = []
+            for i, (y, x) in enumerate(data):
+                # Falls labels separat übergeben wurden (bei Vorhersagen), nutze diese
+                current_label = labels[i] if labels is not None else y
+                plot_data.append((x[0], x[1], current_label))
+
+            # 2. Zufällig mischen (WICHTIG gegen Overplotting)
+            random.shuffle(plot_data)
+
+            # 3. Entpacken für Matplotlib
+            x_vals = [p[0] for p in plot_data]
+            y_vals = [p[1] for p in plot_data]
+            l_vals = [p[2] for p in plot_data]
+
+            # 4. Farben zuweisen
+            # Blau für +1, Rot für -1
+            colors = ['dodgerblue' if l == 1.0 else 'tomato' for l in l_vals]
+
+            # 5. Plotten (Ein einziger Aufruf!)
+            # alpha=0.6 sorgt zusätzlich für Transparenz
+            plt.scatter(x_vals, y_vals, c=colors, marker='o', s=20, alpha=0.6, edgecolors='none')
+
+            # Fake-Legende erstellen (da wir nur einen scatter-Call haben)
+            from matplotlib.lines import Line2D
+            legend_elements = [
+                Line2D([0], [0], marker='o', color='w', markerfacecolor='dodgerblue', label='Klasse +1', markersize=8),
+                Line2D([0], [0], marker='o', color='w', markerfacecolor='tomato', label='Klasse -1', markersize=8)
+            ]
+
+            plt.title(title)
+            plt.xlabel("$x_1$")
+            plt.ylabel("$x_2$")
+            plt.legend(handles=legend_elements)
+            plt.grid(True, linestyle='--', alpha=0.6)
+            plt.savefig(os.path.join(output_dir, filename))
+            plt.close()
+
+
+        # --- A. Train Plot (Wahre Labels) ---
+        # Wir übergeben None als Labels, da sie im dataset_train schon drin sind
+        plot_shuffled(dataset_train, None,
+                      f"Trainingsdaten D: {args.datasetname}",
+                      f"{base_filename}.train.png")
+
+        # --- B. Result Plot (Vorhersagen) ---
+        # Hier übergeben wir die Predictions
+        plot_shuffled(dataset_test, predictions,
+                      f"Klassifikationsergebnis $f_D$ (k={best_k})",
+                      f"{base_filename}.result.png")
+
+    #else:
+       # print(f"Dimension ist d={current_dimension}. Überspringe 2D-Visualisierung.")
