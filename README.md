@@ -89,4 +89,4 @@ python classify.py -f 2 -k 5 -n 100 classification_data/bananas-1-2d.train.csv
 | phishing.small                | 484,22                      | 370
 | magic_gamma_telescope.small   | 196,19                      | 115,8
 | cod-rna.small                 | 391,1                       | 160,9
-| covtype.small                 | 1000 (exit)                 | 1175
+| covtype.small                 | 1000 (exit)                 | 1145
