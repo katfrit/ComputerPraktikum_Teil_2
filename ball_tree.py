@@ -68,9 +68,7 @@ class BallTree:
             if node['points'] is not None:
                 for label, coord in node['points']:
                     d_sq = sum((x - y) ** 2 for x, y in zip(target, coord))
-                    if len(neighbors) < k - 1:
-                        neighbors.append((d_sq, label))
-                    elif len(neighbors) == k - 1:
+                    if len(neighbors) < k:
                         neighbors.append((d_sq, label))
                         neighbors.sort()
                     elif d_sq < neighbors[-1][0]:
