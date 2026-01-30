@@ -33,10 +33,13 @@ def run_cross_validation(data, l_folds, K_max, mode):
     # Adaptive Optimierung für große Datensätze (Sampling der k-Werte)
     use_step = n > 30000
     k_to_check = set(range(1, K_max + 1))
+
+    """ 
     if use_step:
         # feingranular bei kleinen k, grober bei großen k (da stabiler)
         k_to_check = set(list(range(1, 21)) + list(range(25, K_max + 1, 5)))
         if K_max not in k_to_check: k_to_check.add(K_max)
+    """
 
     errors = {k: 0 for k in range(1, K_max + 1)}
 
