@@ -14,10 +14,10 @@ def load_data(filename):
         with open(filename, 'r') as f:
             for line in f:
                 if not line.strip(): continue
-                # Direkter Split am Komma ist viel schneller
+                # Direkter Split am Komma schneller
                 parts = line.split(',')
                 # y (Label) ist das erste Element, der Rest sind x (Koordinaten)
-                # map(float, ...) ist eine C-Funktion und viel schneller als List Comp
+                # map(float, ...) ist eine C-Funktion und schneller als List Comp
                 data.append((float(parts[0]), list(map(float, parts[1:]))))
     except Exception as e:
         print(f"Fehler beim Laden: {e}")
@@ -27,18 +27,12 @@ def load_data(filename):
 
 def run_cross_validation(data, l_folds, K_max, mode):
     n = len(data)
+    # Fold-Erzeugung wie gehabt
     if mode != 1: random.shuffle(data)
     folds = [data[i::l_folds] for i in range(l_folds)]
 
-    # Adaptive Optimierung für große Datensätze (Sampling der k-Werte)
-    use_step = n > 30000
-    k_to_check = set(range(1, K_max + 1))
-    if use_step:
-        # feingranular bei kleinen k, grober bei großen k (da stabiler)
-        k_to_check = set(list(range(1, 21)) + list(range(25, K_max + 1, 5)))
-        if K_max not in k_to_check: k_to_check.add(K_max)
-
-    errors = {k: 0 for k in range(1, K_max + 1)}
+    # Speichere Fehlerraten pro Fold und k - Struktur: fold_errors[k] = [rate_fold1, rate_fold2, ...]
+    fold_errors = {k: [] for k in range(1, K_max + 1)}
 
     for i in range(l_folds):
         test_set = folds[i]
@@ -47,31 +41,27 @@ def run_cross_validation(data, l_folds, K_max, mode):
             if i != j: train_set.extend(folds[j])
 
         tree = BallTree(train_set)
+        current_fold_counts = {k: 0 for k in range(1, K_max + 1)}
 
         for y_true, x_test in test_set:
-            # alle k_max Nachbarn einmalig abholen
             neighbors = tree.query(x_test, K_max)
-            # Running Sum Optimierung: Berechnet alle k in O(k_max) statt O(K_max^2)
             current_sum = 0
             for idx, label in enumerate(neighbors):
                 k = idx + 1
                 current_sum += label
-                if k in k_to_check:
-                    # Klassifikationsunterscheidung
-                    y_pred = 1.0 if current_sum >= 0 else -1.0
-                    if y_pred != y_true:
-                        errors[k] += 1
+                y_pred = 1.0 if current_sum >= 0 else -1.0
+                if y_pred != y_true:
+                    current_fold_counts[k] += 1
 
-    if use_step:
-        # Lineare Interpolation der Fehlerraten für log-Datei
-        s_ks = sorted(list(k_to_check))
-        for idx in range(len(s_ks) - 1):
-            for fill in range(s_ks[idx] + 1, s_ks[idx + 1]):
-                errors[fill] = errors[s_ks[idx]]
+        # Fehlerrate für diesen Fold speichern
+        for k in range(1, K_max + 1):
+            fold_errors[k].append(current_fold_counts[k] / len(test_set))
 
-    best_k = min(errors, key=errors.get)
-    min_error_rate = errors[best_k] / n
-    return best_k, min_error_rate, errors
+    # Berechne Mittelwert R_D(k)
+    avg_errors = {k: sum(fold_errors[k]) / l_folds for k in range(1, K_max + 1)}
+    best_k = min(avg_errors, key=avg_errors.get)
+
+    return best_k, avg_errors[best_k], avg_errors, fold_errors
 
 
 if __name__ == "__main__":
@@ -97,25 +87,24 @@ if __name__ == "__main__":
 
     # --- Trainingsphase ---
     start_train = time.perf_counter()
-    best_k, best_error, cv_errors = run_cross_validation(dataset_train, args.f, args.k, args.d)
+    best_k, best_error, cv_errors, fold_errors = run_cross_validation(dataset_train, args.f, args.k, args.d)
     elapsed_train = time.perf_counter() - start_train
 
     # --- Testphase ---
     start_test = time.perf_counter()
     final_tree = BallTree(dataset_train)
     test_errors = 0
-    m = len(dataset_test)
+    #m = len(dataset_test)
     predictions = []
 
     for y_true, x_test in dataset_test:
         neighbors = final_tree.query(x_test, best_k)
         y_pred = 1.0 if sum(neighbors) >= 0 else -1.0
         predictions.append(y_pred)
-        if y_pred != y_true:
-            test_errors += 1
+        if y_pred != y_true: test_errors += 1
 
     elapsed_test = time.perf_counter() - start_test
-    test_error_rate = test_errors / m if m > 0 else 0.0
+    test_error_rate = test_errors / len(dataset_test) if dataset_test else 0.0
 
     # --- Ausgabe ---
     print(f"Benötigte Trainingszeit: {elapsed_train:.1f} Sekunden")
@@ -127,49 +116,45 @@ if __name__ == "__main__":
     os.makedirs(output_dir, exist_ok=True)
     base_filename = f"team-{team_number}-{args.datasetname}"
 
-    # 1. Result-Datei
-    res_file = os.path.join(output_dir, f"{base_filename}.result.csv")
-    with open(res_file, 'w') as f:
-        for p in predictions: f.write(f"{int(p)}\n")
-    #print(f"Vorhersagen gespeichert in: {res_file}")
+    # 1. .result.csv
+    with open(os.path.join(output_dir, f"{base_filename}.result.csv"), 'w') as f:
+        for i in range(len(dataset_test)):
+            y_p = int(predictions[i])
+            coords = ", ".join(map(str, dataset_test[i][1]))
+            f.write(f"{y_p}, {coords}\n")
 
-    # 2. Klassifikations-Logdatei (.log)
-    log_file = os.path.join(output_dir, f"{base_filename}.log")
-    with open(log_file, 'w') as f:
-        n_train = len(dataset_train)
-        for k_val in range(1, args.k + 1):
-            rate = cv_errors[k_val] / n_train
-            f.write(f"{k_val}\t{rate:.6f}\n")
-    #print(f"Fehlertabelle gespeichert in: {log_file}")
+    # 2. .log
+    with open(os.path.join(output_dir, f"{base_filename}.log"), 'w') as f:
+        for kv in range(1, args.k + 1):
+            row = [str(kv)] + [f"{e:.6f}" for e in fold_errors[kv]] + [f"{cv_errors[kv]:.6f}"]
+            f.write(", ".join(row) + "\n")
 
-    # 3. Zusammenfassungs-Logdatei (.result.log)
-    summary_log = os.path.join(output_dir, f"{base_filename}.result.log")
-    with open(summary_log, 'w') as f:
-        f.write(f"{elapsed_train:.2f}\n")
-        f.write(f"{elapsed_test:.2f}\n")
-        f.write(f"{best_k}\n")
-        f.write(f"{test_error_rate:.6f}\n")
+    # 3. .result.log
+    with open(os.path.join(output_dir, f"{base_filename}.result.log"), 'w') as f:
+        f.write(f"{elapsed_train:.2f}\n{elapsed_test:.2f}\n{best_k}\n{test_error_rate:.6f}\n")
 
-    # 4. Grafik der Fehlerkurve (log.png)
+    # 4. .log.png
     plt.figure(figsize=(10, 6))
-    ks = sorted(list(cv_errors.keys()))
-    errs = [cv_errors[k] / len(dataset_train) for k in ks]
-    plt.plot(ks, errs, label='Risiko $\\tilde{R}_D(k)$')
-    plt.axvline(x=best_k, color='r', linestyle='--', label=f'Bestes k* = {best_k}')
-    plt.hlines(test_error_rate, xmin=1, xmax=args.k, color='g',
-               label=f"Testfehler $R_{{D'}}(f_D)$ = {test_error_rate:.3f}")
-    plt.xlabel('k')
+    ks = sorted(cv_errors.keys())
+    err_rates = [cv_errors[k] for k in ks]
+
+    plt.plot(ks, err_rates, color='blue', linewidth=2, label='$\\tilde{R}_D(k)$ (Kreuzvalidierung)')
+    plt.axvline(x=best_k, color='red', linestyle='--', label=f'$k^* = {best_k}$')
+    plt.hlines(test_error_rate, xmin=1, xmax=args.k, color='green',
+                   label=f"$R_{{D'}}(f_D) = {test_error_rate:.4f}$")
+
+    plt.xlabel('K = {1, 2, ..., ' + str(args.k) + '}')
     plt.ylabel('Fehlerrate')
-    plt.title(f'Kreuzvalidierung für {args.datasetname}')
+    plt.title(f'Fehlerkurve: {args.datasetname}')
     plt.legend()
-    plt.grid(True)
+    plt.grid(True, alpha=0.3)
     plt.savefig(os.path.join(output_dir, f"{base_filename}.log.png"))
     plt.close()
 
     # 5. Visualisierung für d = 2
     current_dimension = len(dataset_train[0][1])
     if current_dimension == 2:
-        print(f"Dimension d=2 erkannt. Erstelle Visualisierungen für {args.datasetname}...")
+        #print(f"Dimension d=2 erkannt. Erstelle Visualisierungen für {args.datasetname}...")
 
 
         # --- Hilfsfunktion für zufälliges Plotten ---
@@ -184,7 +169,7 @@ if __name__ == "__main__":
                 current_label = labels[i] if labels is not None else y
                 plot_data.append((x[0], x[1], current_label))
 
-            # 2. Zufällig mischen (WICHTIG gegen Overplotting)
+            # 2. Zufällig mischen (gegen Overplotting)
             random.shuffle(plot_data)
 
             # 3. Entpacken für Matplotlib
@@ -196,7 +181,7 @@ if __name__ == "__main__":
             # Blau für +1, Rot für -1
             colors = ['dodgerblue' if l == 1.0 else 'tomato' for l in l_vals]
 
-            # 5. Plotten (Ein einziger Aufruf!)
+            # 5. Plotten
             # alpha=0.6 sorgt zusätzlich für Transparenz
             plt.scatter(x_vals, y_vals, c=colors, marker='o', s=20, alpha=0.6, edgecolors='none')
 
@@ -223,7 +208,7 @@ if __name__ == "__main__":
                       f"{base_filename}.train.png")
 
         # --- B. Result Plot (Vorhersagen) ---
-        # Hier übergeben wir die Predictions
+        # Predictions übergeben
         plot_shuffled(dataset_test, predictions,
                       f"Klassifikationsergebnis $f_D$ (k={best_k})",
                       f"{base_filename}.result.png")
