@@ -1,8 +1,29 @@
 import math
 import time
 
+# BallTree data structure for efficient k-NN search.
+# Builds a binary tree by recursively partitioning the data into hyperspherical nodes.
+# Leaf nodes store data points, inner nodes store center and radius for pruning.
+# Nearest-neighbor queries are performed using a best-first search with distance-based pruning.
 
 class BallTree:
+    """
+    BallTree data structure for efficient k-NN search.
+
+    Structure:
+        __init__(data, leaf_size)
+            Initializes the tree and precomputes point norms.
+
+        _build_iterative(data)
+            Builds the tree iteratively using ball partitioning.
+
+        query(target, k)
+            Performs a k-nearest neighbor search with pruning.
+
+    Each node stores a center and radius; leaf nodes additionally
+    store the associated data points.
+    """
+
     def __init__(self, data, leaf_size=40):
         self.leaf_size = leaf_size
         self.nodes = []
@@ -91,12 +112,12 @@ class BallTree:
             if len(neighbors) == k:
                 # d_min_so_far is the square root of the worst distance
                 if d_to_center > node['radius'] + math.sqrt(neighbors[-1][0]):
-                    break  # KNo remaining nodes in the sorted queue can yield a better result
+                    break  
 
             if node['points'] is not None:
                 for label, coord in node['points']:
                     c_tuple = tuple(coord)
-                    # BBinomial formula: ||x-y||^2 = ||x||^2 - 2<x,y> + ||y||^2
+                    # Binomial formula: ||x-y||^2 = ||x||^2 - 2<x,y> + ||y||^2
                     d_sq = target_norm_sq - 2 * sum(t * c for t, c in zip(target, coord)) + self.point_norms[c_tuple]
 
                     if len(neighbors) < k:

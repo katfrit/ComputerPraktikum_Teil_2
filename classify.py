@@ -3,29 +3,47 @@ import sys
 import os
 import argparse
 import random
-from ball_tree_fast import BallTree
+from ball_tree import BallTree
 import time
 import matplotlib.pyplot as plt
 
-
+# load data
 def load_data(filename):
     data = []
     try:
         with open(filename, 'r') as f:
             for line in f:
                 if not line.strip(): continue
-                # Direct split at the comma is faster
                 parts = line.split(',')
                 # y (label) is the first element, the rest are x (coordinates)
                 # map(float, ...) is a C function and faster than a list comprehension
                 data.append((float(parts[0]), list(map(float, parts[1:]))))
     except Exception as e:
-        print(f"Fehler beim Laden: {e}")
+        print(f"Error while loading: {e}")
         sys.exit(1)
     return data
 
 
 def run_cross_validation(data, l_folds, K_max, mode):
+    """
+    Performs l-fold cross-validation for k-NN classification using a BallTree.
+    For each fold, the classifier is evaluated for k = 1,...,K_max and the
+    corresponding misclassification rates are computed. Classification is based
+    on cumulative majority voting over the k nearest neighbors.
+
+    Args:
+        data (list): Dataset of (label, feature) pairs with labels in {+1, -1}.
+        l_folds (int): Number of folds used for cross-validation.
+        K_max (int): Maximum number of nearest neighbors considered.
+        mode (int): If mode != 1, the data is shuffled before creating folds.
+
+    Returns:
+        best_k (int): Value of k with minimal average validation error.
+        best_error (float): Average validation error for best_k.
+        avg_errors (dict): Mean validation error for each k.
+        fold_errors (dict): Validation errors per fold for each k.
+        folds (list): The generated data folds.
+    """
     n = len(data)
     # generating folds
     if mode != 1: random.shuffle(data)
@@ -63,14 +81,35 @@ def run_cross_validation(data, l_folds, K_max, mode):
 
     return best_k, avg_errors[best_k], avg_errors, fold_errors, folds
 
+# Main program:
+# Parses command-line arguments, loads training and test data,
+# performs l-fold cross-validation to select the optimal k for k-NN,
+# trains an ensemble classifier, evaluates it on the test set,
+# and writes predictions, logs, and visualizations to disk.
 if __name__ == "__main__":
     team_number = "2"
-    parser = argparse.ArgumentParser(description="KNN Classification")
-    parser.add_argument("datasetname", help="Dataset Name")
-    parser.add_argument("-f", type=int, default=5, help="Number of Folds")
-    parser.add_argument("-k", type=int, default=200, help="Maximum k")
-    parser.add_argument("-d", type=int, choices=[0, 1], default=0, help="Mode (0 = random, 1 = deterministic)")
-    parser.add_argument("-n", type=int, default=None, help="Use only the first N points")
+    parser = argparse.ArgumentParser(description=("KNN classification with l-fold cross validation.\n\n"
+        "The program determines the optimal k* ∈ {1, …, kmax} "
+        "using cross validation on the training data and then "
+        "applies the resulting classifier f_D to the test data."),formatter_class=argparse.RawTextHelpFormatter)  
+    parser.add_argument("datasetname", help="Name of the dataset (without file extension).\n"
+            "The following files are expected:\n"
+            "  ../classification-data/<datasetname>.train.csv\n"
+            "  ../classification-data/<datasetname>.test.csv")
+    parser.add_argument("-f", type=int, default=5, metavar="l", help="Number of folds for cross validation (default: 5).\n"
+            "The training data is split into l subsets D1, …, Dl.")
+    parser.add_argument("-k", type=int, default=200, metavar="Kmax", help="Maximum value of k (default: 200).\n"
+            "The set K = {1, 2, …, Kmax} is evaluated.")
+    parser.add_argument("-d", type=int, choices=[0, 1], default=0, metavar="mode", help="Mode for generating the folds (default: 0).\n"
+            "  0: Random partitioning of the data\n"
+            "  1: Deterministic partitioning as specified in the assignment:\n"
+            "     D1 = (y1, x1), (yl+1, xl+1), (y2l+1, x2l+1), ...\n"
+            "     D2 = (y2, x2), (yl+2, xl+2), (y2l+2, x2l+2), ...\n"
+            "     ...")
+    parser.add_argument("-n", type=int, default=None, metavar="N", help="Optional additional parameter.\n"
+        "Uses only the first N training samples.\n"
+        "This parameter does not affect the default behavior\n"
+        "and is intended solely for testing or runtime experiments.\n\n")
 
     args = parser.parse_args()
 
@@ -102,8 +141,6 @@ if __name__ == "__main__":
     predictions = []
 
     for y_true, x_test in dataset_test:
-        # neighbors = final_tree.query(x_test, best_k)
-        # y_pred = 1.0 if sum(neighbors) >= 0 else -1.0
         vote_sum = 0.0
         for tree in ensemble_trees:
             neighbors = tree.query(x_test, best_k)
@@ -119,7 +156,7 @@ if __name__ == "__main__":
     # Output
     print(f"Required training time: {elapsed_train:.1f} seconds")
     # print(f"Required test time: {elapsed_test:.1f} seconds")
-    print(f"Best k*: {best_k} with error rate R_D(k*): {best_error:.7f}")
+    print(f"Best k*: {best_k} with error rate R_D(k*): {best_error:.3f}")
     # print(f"R_D'(f_D): {test_error_rate:.3f}")
 
     output_dir = "../classification-results"
@@ -164,8 +201,6 @@ if __name__ == "__main__":
     # 5. Visualization for d = 2
     current_dimension = len(dataset_train[0][1])
     if current_dimension == 2:
-        # print(f"Dimension d=2 detected. Creating visualizations for {args.datasetname}...")
-
 
         # Helper function for random plotting
         def plot_shuffled(data, labels, title, filename):
