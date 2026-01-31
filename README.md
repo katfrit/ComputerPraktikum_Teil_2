@@ -88,5 +88,5 @@ python classify.py -f 2 -k 5 -n 100 classification_data/bananas-1-2d.train.csv
 | toy-10d                       | 31.48                       | 24.0 (0.222)              | 23.0 (0.223)            | 17.3 (0.222)
 | phishing.small                | 484,22?                     | 370                       |                         |
 | magic_gamma_telescope.small   | 131.88                      | 118.5 (0.163)             | 122.2 (0.163)           | 90.0 (0.162)
-| cod-rna.small                 | 238.27                      | 189 (0.073)               | 160.2 (0.071)           |
-| covtype.small                 | 3600 (exit)                 | 1145                      | 1061                    |
+| cod-rna.small                 | 238.27                      | 189 (0.073)               | 160.2 (0.071)           | 137.4 (0.076)
+| covtype.small                 | 3600 (exit)                 | 1145                      | 1061                    | 628.8 (0.167)
