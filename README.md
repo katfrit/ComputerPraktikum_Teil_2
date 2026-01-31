@@ -73,7 +73,7 @@ python classify.py -f 2 -k 5 -n 100 classification_data/bananas-1-2d.train.csv
 
 ## Project Run-Time 
 
-| Data Set                      | Steinwart Run Time (in s)   | Lars Run Time (main Code) | Lars Run Time (Claude new Code)
+| Data Set                      | Steinwart Run Time (in s)   | Run Time - main (error)   | Run Time Claude (error) | Run Time Gemini (error)
 | ------------------------------|-----------------------------|---------------------------|--------------------------------
 | bananas-1-2d                  | 15.63                       | 10.6 (0.223)              | 9.30 (0.223)
 | bananas-2-2d                  | 15.35                       | 12.1 (0.224)              | 13.9 (0.224)
