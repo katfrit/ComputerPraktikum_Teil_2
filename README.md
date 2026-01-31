@@ -73,20 +73,20 @@ python classify.py -f 2 -k 5 -n 100 classification_data/bananas-1-2d.train.csv
 
 ## Project Run-Time 
 
-| Data Set                      | Steinwart Run Time (in s)   | Lars Run Time (in s, with ball_tree @Joern
-| ------------------------------|-----------------------------|--------------------
-| bananas-1-2d                  | 18,48                       | 8,3
-| bananas-2-2d                  | 18,22                       | 9,6
-| bananas-5-2d                  | 20,55                       | 11,0
-| bananas-1-4d                  | 22,34                       | 11,9
-| bananas-2-4d                  | 25,43                       | 12,9
-| bananas-5-4d                  | 28,56                       | 15,1
-| crosses-2d                    | 14,18                       | 9,4
-| toy-2d                        | 14,28                       | 10
-| toy-3d                        | 15,93                       | 14,6
-| toy-4d                        | 22,41                       | 15,1
-| toy-10d                       | 36,13                       | 22
-| phishing.small                | 484,22                      | 370
-| magic_gamma_telescope.small   | 196,19                      | 115,8
-| cod-rna.small                 | 391,1                       | 160,9
-| covtype.small                 | 1000 (exit)                 | 1145
+| Data Set                      | Steinwart Run Time (in s)   | Lars Run Time (main Code) | Lars Run Time (Claude new Code)
+| ------------------------------|-----------------------------|---------------------------|--------------------------------
+| bananas-1-2d                  | 15.63                       | 8,30                      | 9.30 (0.223)
+| bananas-2-2d                  | 15.35                       | 9,60                      | 13.9 (0.224)
+| bananas-5-2d                  | 18.15                       | 11,0                      | 13.5 (0.252)
+| bananas-1-4d                  | 16.26                       | 11,9                      | 10.3 (0.224)
+| bananas-2-4d                  | 19.39                       | 12,9                      | 17.4 (0.223)
+| bananas-5-4d                  | 25.24                       | 15,1                      | 19.5 (0.253)
+| crosses-2d                    | 21.06                       | 9,40                      | 13.7 (0.273)
+| toy-2d                        | 20.46                       | 10.0                      | 12.8 (0.224)
+| toy-3d                        | 21.16                       | 14,6                      | 22.0 (0.223)
+| toy-4d                        | 21.20                       | 15,1                      | 20.2 (0.220)
+| toy-10d                       | 31.48                       | 22.0                      | 23.0 (0.223)
+| phishing.small                | 484,22?                     | 370                       |
+| magic_gamma_telescope.small   | 131.88                      | 115,8                     | 129.9 (0.162)
+| cod-rna.small                 | 238.27                      | 160,9                     |
+| covtype.small                 | 3600 (exit)                 | 1145                      |
