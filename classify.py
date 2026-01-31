@@ -34,6 +34,9 @@ def run_cross_validation(data, l_folds, K_max, mode):
     # Speichere Fehlerraten pro Fold und k - Struktur: fold_errors[k] = [rate_fold1, rate_fold2, ...]
     fold_errors = {k: [] for k in range(1, K_max + 1)}
 
+    total_build_time = 0.0
+    total_query_time = 0.0
+
     for i in range(l_folds):
         test_set = folds[i]
         train_set = []
@@ -42,6 +45,8 @@ def run_cross_validation(data, l_folds, K_max, mode):
 
         tree = BallTree(train_set)
         current_fold_counts = {k: 0 for k in range(1, K_max + 1)}
+
+        total_build_time += tree.build_time
 
         for y_true, x_test in test_set:
             neighbors = tree.query(x_test, K_max)
@@ -52,7 +57,7 @@ def run_cross_validation(data, l_folds, K_max, mode):
                 y_pred = 1.0 if current_sum >= 0 else -1.0
                 if y_pred != y_true:
                     current_fold_counts[k] += 1
-
+        total_query_time += tree.query_time
         # Fehlerrate für diesen Fold speichern
         for k in range(1, K_max + 1):
             fold_errors[k].append(current_fold_counts[k] / len(test_set))
@@ -61,7 +66,7 @@ def run_cross_validation(data, l_folds, K_max, mode):
     avg_errors = {k: sum(fold_errors[k]) / l_folds for k in range(1, K_max + 1)}
     best_k = min(avg_errors, key=avg_errors.get)
 
-    return best_k, avg_errors[best_k], avg_errors, fold_errors
+    return best_k, avg_errors[best_k], avg_errors, fold_errors, total_build_time, total_query_time
 
 
 if __name__ == "__main__":
@@ -87,7 +92,9 @@ if __name__ == "__main__":
 
     # --- Trainingsphase ---
     start_train = time.perf_counter()
-    best_k, best_error, cv_errors, fold_errors = run_cross_validation(dataset_train, args.f, args.k, args.d)
+    best_k, best_error, cv_errors, fold_errors, build_time_cv, query_time_cv = run_cross_validation(dataset_train, args.f, args.k, args.d)
+
+
     elapsed_train = time.perf_counter() - start_train
 
     # --- Testphase ---
@@ -96,7 +103,6 @@ if __name__ == "__main__":
     test_errors = 0
     #m = len(dataset_test)
     predictions = []
-
     for y_true, x_test in dataset_test:
         neighbors = final_tree.query(x_test, best_k)
         y_pred = 1.0 if sum(neighbors) >= 0 else -1.0
@@ -109,6 +115,8 @@ if __name__ == "__main__":
     # --- Ausgabe ---
     print(f"Benötigte Trainingszeit: {elapsed_train:.1f} Sekunden")
     #print(f"Benötigte Testzeit: {elapsed_test:.1f} Sekunden")
+    print(f"  -> Davon reine BallTree-Builds:  {build_time_cv:.2f}s")
+    print(f"  -> Davon reine BallTree-Queries: {query_time_cv:.2f}s")
     print(f"Bestes k*: {best_k} mit Fehlerrate R_D(k*): {best_error:.3f}")
     #print(f"R_D'(f_D): {test_error_rate:.3f}")
 
