@@ -9,13 +9,13 @@
 %	TITLE PAGE & AUTHOR
 %----------------------------------------------------------------------------------------
 
-\title[]{{\bf Title}}
+\title[]{{\bf The K-Nearest Neighbors Algorithm}}
 
-\author[]{author}
+\author[]{Team 2}
 
-\institute[]{institute}
+\institute[]{Computerpraktikum Teil 2}
 
-\date[]{date}
+\date[]{\today}
 
 \begin{document}
 
@@ -27,39 +27,153 @@
 %	ACTUAL CONTENT
 %----------------------------------------------------------------------------------------
 
-\begin{frame}{First Slide}
-    \begin{tikzpicture}[overlay, scale=1.2, yshift=0.9cm, xshift=3.0cm]
-
-        \begin{scope}[]
-            
-        \end{scope}
-    
-    \end{tikzpicture}
+%\begin{frame}{First Slide}
+%    \begin{tikzpicture}[overlay, scale=1.2, yshift=0.9cm, xshift=3.0cm]
+%
+%        \begin{scope}[]
+%            
+%        \end{scope}
+%    
+%    \end{tikzpicture}
+%\end{frame}
+%
+%\begin{frame}{Problemstellung}
+%    
+%\end{frame}
+%
+%\begin{frame}{Classifier}
+%    
+%\end{frame}
+%
+%\begin{frame}{Ball Tree}
+%    
+%\end{frame}
+%
+%\begin{frame}{Rekursiv}
+%    
+%\end{frame}
+%
+%\begin{frame}{Iterativ}
+%    
+%\end{frame}
+%
+%\begin{frame}{Speed ups}
+%    
+%\end{frame}
+\begin{frame}{Presentation Overview}
+\begin{itemize}
+    \item \textbf{Problem Statement}
+    \item \textbf{Code Structure} % müssen noch schauen wie das reinpasst, vllt am Ende als Resultat? Oder aufgesplittet in Stücke throughout the pres
+    \item \textbf{Ball Tree}
+    \begin{itemize}
+        \item Constructed Recursively
+        \item Constructed Iteratively
+    \end{itemize}
+    \item \textbf{Speed Ups}
+    \item \textbf{Error Reduction Strategies}
+    \item \textbf{References}
+\end{itemize}
 \end{frame}
-
-\begin{frame}{Problemstellung}
-    
+\begin{frame}
+    \centering
+    \vfill
+    {\Huge \color{blue}{Problem Statement}}\\[0.8em]
+    \rule{0.6\linewidth}{0.8pt}
+    \vfill
+\end{frame} % Divider: Problem Statement
+\begin{frame}{Problem Statement}
+\begin{itemize}
+    \item Implement a method for \textbf{binary classification} in Python
+    \item Given labeled data 
+    \begin{align*}
+        D = \{(y_i, x_i)\}_{i=1}^n,~
+        y_i \in \{-1,1\},~
+        x_i \in [-1,1]^d
+    \end{align*}
+    \item Learn a classifier $f_D : [-1,1]^d \rightarrow \{-1,1\}$
+    \item Goal: \textbf{minimize the misclassification rate} on unseen test data $D'$
+    \item Approach: \textbf{$k$-nearest neighbors} with cross validation to select $k^*$
+\end{itemize}
 \end{frame}
+\begin{frame}
+    \centering
+    \vfill
+    {\Huge \color{blue}{Code Structure}}\\[0.8em]
+    \rule{0.6\linewidth}{0.8pt}
+    \vfill
+\end{frame} % Divider: Code Structure
+\begin{frame}{classify.py}
+\begin{itemize}
+    \item \textbf{Setup}
+    \begin{itemize}
+        \item Import standard libraries
+        \item Custom \texttt{BallTree} class for nearest neighbor search
+    \end{itemize}
 
-\begin{frame}{Classifier}
-    
-\end{frame}
+    \item \textbf{Data Loading}
+    \begin{itemize}
+        \item \texttt{load\_data}: reads CSV files and stores samples as $(y, x)$ pairs (label and feature vector)
+    \end{itemize}
 
-\begin{frame}{Ball Tree}
-    
-\end{frame}
+    \item \textbf{Cross Validation}
+    \begin{itemize}
+        \item \texttt{run\_cross\_validation}: performs $l$-fold cross validation
+        \item Evaluates $k = 1,\dots,K_{\max}$ using cumulative majority voting
+        \item Computes fold-wise and averaged validation error rates
+    \end{itemize}
 
-\begin{frame}{Rekursiv}
-    
-\end{frame}
+    \item \textbf{Training}
+    \begin{itemize}
+        \item Selection of optimal $k^*$ based on minimal validation error
+        \item Construction of an ensemble of BallTrees
+    \end{itemize}
 
-\begin{frame}{Iterativ}
-    
+    \item \textbf{Testing \& Output}
+    \begin{itemize}
+        \item Ensemble voting for final predictions on the test set
+        \item Writes predictions, logs, and error curves to disk
+        \item Optional visualization for 2D datasets
+    \end{itemize}
+\end{itemize}
 \end{frame}
+\begin{frame}{ball\_tree.py}
+\begin{itemize}
+    \item \textbf{Tree Construction}
+    \begin{itemize}
+        \item Data is recursively partitioned into hyperspherical regions (balls)
+        \item Each node stores a center and radius enclosing its data
+        \item Leaf nodes store the actual data points
+        \item Tree is built iteratively using a stack (no recursion)
+    \end{itemize}
 
-\begin{frame}{Speed ups}
-    
+    \item \textbf{Distance Optimization}
+    \begin{itemize}
+        \item Precomputation of point norms $\|x\|^2$ for fast distance evaluation
+        \item Uses the identity $\|x-y\|^2 = \|x\|^2 - 2\langle x,y\rangle + \|y\|^2$
+    \end{itemize}
+
+    \item \textbf{Query Algorithm}
+    \begin{itemize}
+        \item Best-first search using a priority queue ordered by distance to node centers
+        \item Local and global pruning based on node radius and current worst neighbor
+        \item Early termination when no closer neighbors are possible
+    \end{itemize}
+\end{itemize}
 \end{frame}
+\begin{frame}
+    \centering
+    \vfill
+    {\Huge \color{blue}{Speed Ups}}\\[0.8em]
+    \rule{0.6\linewidth}{0.8pt}
+    \vfill
+\end{frame} % Divider: Speed Ups
+\begin{frame}
+    \centering
+    \vfill
+    {\Huge \color{blue}{Error Reduction Strategies}}\\[0.8em]
+    \rule{0.6\linewidth}{0.8pt}
+    \vfill
+\end{frame} % Divider: Errror Reduction Strategies
 
 
 
