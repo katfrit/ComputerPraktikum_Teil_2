@@ -89,7 +89,7 @@ def run_cross_validation(data, l_folds, K_max, mode):
 if __name__ == "__main__":
     team_number = "2"
     parser = argparse.ArgumentParser(description=("KNN classification with l-fold cross validation.\n\n"
-        "The program determines the optimal k* ∈ {1, …, kmax} "
+        "The program determines the optimal k* ∈ {1, ..., kmax} "
         "using cross validation on the training data and then "
         "applies the resulting classifier f_D to the test data."),formatter_class=argparse.RawTextHelpFormatter)  
     parser.add_argument("datasetname", help="Name of the dataset (without file extension).\n"
@@ -97,7 +97,7 @@ if __name__ == "__main__":
             "  ../classification-data/<datasetname>.train.csv\n"
             "  ../classification-data/<datasetname>.test.csv")
     parser.add_argument("-f", type=int, default=5, metavar="l", help="Number of folds for cross validation (default: 5).\n"
-            "The training data is split into l subsets D1, …, Dl.")
+            "The training data is split into l subsets D1, ..., Dl.")
     parser.add_argument("-k", type=int, default=200, metavar="Kmax", help="Maximum value of k (default: 200).\n"
             "The set K = {1, 2, …, Kmax} is evaluated.")
     parser.add_argument("-d", type=int, choices=[0, 1], default=0, metavar="mode", help="Mode for generating the folds (default: 0).\n"
