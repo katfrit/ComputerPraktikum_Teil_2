@@ -27,39 +27,7 @@
 %	ACTUAL CONTENT
 %----------------------------------------------------------------------------------------
 
-%\begin{frame}{First Slide}
-%    \begin{tikzpicture}[overlay, scale=1.2, yshift=0.9cm, xshift=3.0cm]
-%
-%        \begin{scope}[]
-%            
-%        \end{scope}
-%    
-%    \end{tikzpicture}
-%\end{frame}
-%
-%\begin{frame}{Problemstellung}
-%    
-%\end{frame}
-%
-%\begin{frame}{Classifier}
-%    
-%\end{frame}
-%
-%\begin{frame}{Ball Tree}
-%    
-%\end{frame}
-%
-%\begin{frame}{Rekursiv}
-%    
-%\end{frame}
-%
-%\begin{frame}{Iterativ}
-%    
-%\end{frame}
-%
-%\begin{frame}{Speed ups}
-%    
-%\end{frame}
+
 \begin{frame}{Presentation Overview}
 \begin{itemize}
     \item \textbf{Problem Statement}
@@ -175,7 +143,151 @@
     \vfill
 \end{frame} % Divider: Errror Reduction Strategies
 
+% ----------------------------------------------------------------------------------------
+% PART JÖRN
+% ----------------------------------------------------------------------------------------
 
+
+
+\begin{frame}
+    \centering
+    \vfill
+    {\Huge \color{blue}{Ball Tree}}\\[0.8em]
+    \rule{0.6\linewidth}{0.8pt}
+    \vfill
+\end{frame} % Divider: Speed Ups
+
+\begin{frame}{Ball Tree: Conceptual}
+    \begin{tikzpicture}[overlay, scale=1.2, yshift=0.0cm, xshift=4.0cm]
+
+        \node at (-0.2,-0.2) {\includegraphics[width=1\linewidth]{balltree.png}};
+
+        %\fill[white] (-4.8,3) rectangle (-2.1,-0.2);
+        \onslide<-1>{\fill[white] (-1.45,3) rectangle (1.1,-0.2);}
+        \onslide<-4>{\fill[white] (1.4,3) rectangle (5.5,-0.2);}
+        \onslide<-5>{\fill[white] (-4.8,-0.2) rectangle (-2.1,-3.2);}
+        \onslide<-6>{\fill[white] (-1.45,-0.2) rectangle (1.1,-3.2);}
+
+        \begin{scope}[xshift=3.0cm, yshift=-0.5cm]
+            \node<2-> at (-0.45,0.0)  {\Large \textbf{\red{At each node}:}};
+            \node<3-> at (0.25,-0.5)  {\large 1. Compute center and radius};
+            \node<4-> at (0.2,-1.0) {\large 2. Choose two distant points};
+            \node<5-> at (0.33,-1.5)  {\large 3. Split points based on points};
+            \node<6-> at (0.44,-2.0)  {\large 4. Repeat until leaf size reached};
+            \node<7-> at (0.3,-2.6) {\large\red{ \textbf{Leaf nodes store data points}}};
+        \end{scope}
+    
+   \end{tikzpicture}
+
+\end{frame}
+
+\begin{frame}[fragile]{Ball Tree: Recursive}
+\begin{semiverbatim}
+\footnotesize
+\red{def} \orange{BallTree}:
+
+    \red{def} \purple{__init__}(self, data, leaf_size=1):
+        self.\blue{leaf_size} = leaf_size
+        self.\blue{points} = data 
+        self.\blue{left} = None
+        self.\blue{right} = None
+        self.\blue{center} = self.\blue{_computer_center}(data)
+        self.\blue{radius} = self.\blue{_compute_radius}(data, self.\blue{center}) 
+
+        \onslide<2->{\red{if} \purple{len}(data) > self.leaf_size:
+            self.\blue{_split}()}
+
+    \onslide<3->{\red{def} \purple{_split}(self):
+
+        ... \dgreen{# Split points}
+            
+        self.\blue{left} = \purple{BallTree}(left_points, self.\blue{leaf_size})
+        self.\blue{right} = \purple{BallTree}(right_points, self.\blue{leaf_size})
+        self.\blue{points} = None}
+\end{semiverbatim}
+\end{frame}
+
+\begin{frame}[fragile]{Ball Tree: Recursive}
+    \begin{tikzpicture}[overlay, scale=1.1, yshift=-2.2cm, xshift=5.7cm]
+
+    % Datapoints
+    \foreach \x/\y in {
+        0.5/1.2,
+        1.0/0.8,
+        1.3/1.5,
+        1.8/1.0,
+        2.2/1.4,
+        2.6/0.9,
+        3.0/1.3,
+        3.4/1.0,
+        3.8/1.5,
+        4.1/1.1,
+        1.5/1.9,
+        2.0/-0.3,
+        1.2/-0.0,
+        3.1/2.1,
+        3.5/0.3,
+        2.9/0.5
+    } {
+        \filldraw[black] (\x,\y) circle (2pt);
+    }
+
+    % First ball (larger)
+    \draw[blue, thick, dashed]
+        (1.8,1.1) circle (1.5);
+    \node[blue, thick] at (1.8,1.1) {\large $\times$};
+
+    % Second ball (smaller)
+    \draw[red, thick, dashed]
+        (3.2,1.2) circle (1.2);
+    \node[red, thick] at (3.2,1.2) {\large $\times$};
+
+    \filldraw[green] (1.0,1.1) circle (2pt);
+    \onslide<3->{\filldraw[green] (2.9,0.7) circle (2pt);}
+    \onslide<2->{\filldraw[green] (3.8,1.8) circle (2pt);}
+
+    \end{tikzpicture}
+\begin{semiverbatim}
+\footnotesize
+
+\red{def} \orange{BallTree}:
+
+    ... 
+
+    \onslide<4->{\red{def} \purple{query}(self, x, k, knn=[]):
+        lower_bound = \purple{max}(0.0, \purple{distance}(x, self.\blue{center}) - self.\blue{radius})}
+        \onslide<5->{\red{if} \purple{len}(knn) == k \blue{and} lower_bound > knn[0][0]:
+            \red{return}}
+
+        \onslide<6->{\red{if} self.\blue{left} \blue{is None and} self.\blue{right} \blue{is None}: 
+
+            ... \dgreen{# Pointsearch in leaf node}}
+
+        \onslide<7->{\red{if} \purple{distance}(x, self.\blue{left.center}) < \purple{distance}(x, self.\blue{right.center}):
+            self.left.\blue{query}(x, k, knn)
+            self.right.\blue{query}(x, k, knn)
+        \red{else}:
+            ...  }
+\end{semiverbatim}
+\end{frame}
+
+\begin{frame}[fragile]{Ball Tree: Recursive Speed}
+    \begin{enumerate}
+        \item Use \textbf{\red{built-in} functions} (C-optimized). \onslide<4->{{\Huge \dgreen{\checkmark}} }\\For example, instead of list comprehension:
+            \begin{semiverbatim}
+                \small
+\red{def} \purple{vector_sum}(vectors):
+    \red{return} [\purple{sum}(components) \blue{for} components \blue{in} \purple{zip}(\blue{*}vectors)]
+            \end{semiverbatim}
+        \item<2-> \red{\textbf{Avoid defining}} often used functions. \onslide<5->{{\Large \red{\text{\sffamily X}} }}
+        \item<3-> Save often used variables \red{\textbf{locally}}. \onslide<6->{{\Large \red{\text{\sffamily X}}} }
+    \end{enumerate}
+    \vspace{0.7cm}
+    \LARGE \onslide<7->{\textbf{Recursive Method not optimal \red{!!!}}}
+\end{frame}
+
+
+% ----------------------------------------------------------------------------------------
 
 
 %----------------------------------------------------------------------------------------
