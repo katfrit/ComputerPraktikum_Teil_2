@@ -1,0 +1,70 @@
+%----------------------------------------------------------------------------------------
+%	DOCUMENT CONFIGURATION 
+%----------------------------------------------------------------------------------------
+
+\documentclass{beamer}
+\input{config.tex}
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE & AUTHOR
+%----------------------------------------------------------------------------------------
+
+\title[]{{\bf The K-Nearest Neighbors Algorithm}}
+
+\institute[]{Team 2\\Computerpraktikum Teil 2}
+
+\date[]{\today}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+%----------------------------------------------------------------------------------------
+%	ACTUAL CONTENT
+%----------------------------------------------------------------------------------------
+% \begin{frame}{Überblick}
+% \begin{itemize}
+%     \item \textbf{Problemstellung}
+%     \item \textbf{Aufbau von classify.py}
+%     \item \textbf{Aufbau von ball\_tree.py}
+%     \begin{itemize}
+%         \item Rekursiv konstruiert
+%         \item Iterativ konstruiert
+%         \item Splitting Methode
+%     \end{itemize}
+%     \item \textbf{Plotten}
+%     \item \textbf{Speed Ups}
+%     \item \textbf{Fehlerreduktionsstrategien}
+%     \item \textbf{Lernerfolge} %GitHub %Datenstrukturen
+%     \item \textbf{Quellen}
+% \end{itemize}
+% \end{frame}
+\begin{frame}{Inhaltsverzeichnis}
+    \tableofcontents
+\end{frame}
+\include{Kat_Content/Problemstellung}
+
+\include{Kat_Content/Aufbauclassify}
+
+\section{Aufbau von \texttt{ball\_tree.py}}
+
+\include{Joern_Content/Balltree_rekursiv}
+
+\include{Kat_Content/Fehlerreduktionsstrategien}
+
+\include{Kat_Content/Lernerfolge}
+
+
+%----------------------------------------------------------------------------------------
+%	REFERENCES
+%----------------------------------------------------------------------------------------
+
+% \begin{frame}{References}
+%     \nocite{*}
+%     \setbeamertemplate{bibliography item}{}
+%     \printbibliography
+% \end{frame}
+
+\end{document}

@@ -1,0 +1,121 @@
+\section{Aufbau von \texttt{classify.py}}
+\subsection{Laden von Datensätzen}
+\begin{frame}[fragile]{Laden von Datensätzen: Alte Version}
+        \begin{lstlisting}[language=Python]
+try:
+    import csv
+    data = []
+    with open(args.datasetname, 'r') as f:
+        reader = csv.reader(f)
+        for row in reader:
+            if not row:
+                continue
+            try:
+                label = int(row[0])
+                features = [float(v) for v in row[1:]]
+                data.append((label, features))
+            except ValueError:
+                print("Warning: skipping malformed row", row)
+    print(f"Dataset loaded successfully. ...
+        \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Laden von Datensätzen: Neue Version}
+        \begin{lstlisting}[language=Python]
+def load_data(filename):
+    data = []
+    try:
+        with open(filename, 'r') as f:
+            for line in f:
+                if not line.strip(): continue
+                parts = line.split(',')
+                data.append((float(parts[0]), list(map(float, parts[1:]))))
+    except Exception as e:
+        print(f"Error while loading: {e}")
+        sys.exit(1)
+    return data
+\end{lstlisting}
+\end{frame}
+
+\subsection{Erstellen vom Interface}
+\begin{frame}[fragile]{Erstellen vom Interface}
+    \begin{figure}
+        \includegraphics[width=0.8\linewidth, keepaspectratio]{pix/help_text.png}
+    \end{figure}
+\end{frame}
+
+\subsection{Die \texttt{run\_cross\_validation} Funktion}
+\begin{frame}{Die \texttt{run\_cross\_validation} Funktion}
+    \begin{figure}
+        \includegraphics[width=0.9\linewidth]{pix/runcross.png}
+    \end{figure}
+\end{frame}
+
+\begin{frame}[fragile]{Die \texttt{run\_cross\_validation} Funktion}
+    \begin{figure}
+    \begin{lstlisting}[language=Python, basicstyle=\tiny\ttfamily]
+def run_cross_validation(data, l_folds, K_max, mode):
+    n = len(data)
+    if mode != 1: random.shuffle(data)
+    folds = [data[i::l_folds] for i in range(l_folds)]
+    fold_errors = {k: [] for k in range(1, K_max + 1)}
+    for i in range(l_folds):
+        test_set = folds[i]
+        train_set = []
+        for j in range(l_folds):
+            if i != j: train_set.extend(folds[j])
+
+        tree = BallTree(train_set)
+        current_fold_counts = {k: 0 for k in range(1, K_max + 1)}
+
+        for y_true, x_test in test_set:
+            neighbors = tree.query(x_test, K_max)
+            current_sum = 0
+            for idx, label in enumerate(neighbors):
+                k = idx + 1
+                current_sum += label
+                y_pred = 1.0 if current_sum >= 0 else -1.0
+                if y_pred != y_true:
+                    current_fold_counts[k] += 1
+
+        for k in range(1, K_max + 1):
+            fold_errors[k].append(current_fold_counts[k] / len(test_set))
+    avg_errors = {k: sum(fold_errors[k]) / l_folds for k in range(1, K_max + 1)}
+    best_k = min(avg_errors.items(), key=lambda x: x[1])[0]
+
+    return best_k, avg_errors[best_k], avg_errors, fold_errors, folds
+    \end{lstlisting}
+    \end{figure}
+\end{frame}
+
+\subsection{Die main Funktion}
+
+\begin{frame}{Die main Funktion}
+    \begin{figure}
+        \includegraphics[width=0.3\linewidth, keepaspectratio]{pix/c0.png}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Die main Funktion}
+    \begin{figure}
+        \includegraphics[width=0.3\linewidth, keepaspectratio]{pix/c1.png}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Die main Funktion}
+    \begin{figure}
+        \includegraphics[width=0.3\linewidth, keepaspectratio]{pix/c2.png}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Die main Funktion}
+    \begin{figure}
+        \includegraphics[width=0.3\linewidth, keepaspectratio]{pix/c3.png}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Die main Funktion}
+    \begin{figure}
+        \includegraphics[width=0.3\linewidth, keepaspectratio]{pix/c4.png}
+    \end{figure}
+\end{frame}

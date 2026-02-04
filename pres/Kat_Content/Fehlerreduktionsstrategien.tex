@@ -1,0 +1,117 @@
+\section{Fehlerreduktionsstrategien}
+\subsection{Optimierung}
+
+\begin{frame}[fragile]{Optimierung: Versuchte Methoden}
+\begin{columns}[T,onlytextwidth] % [T] aligns to top
+  \begin{column}{0.32\textwidth}
+    \begin{itemize}
+        \item \textbf{stratified l-fold}
+        \item additional distance metrics
+        \item higher percision summation
+        \item leaf size Variation
+    \end{itemize}
+  \end{column}
+  \hfill
+  \begin{column}{0.65\textwidth}
+    \begin{figure}[T]
+    \begin{lstlisting}[language=Python, basicstyle=\tiny\ttfamily]
+from collections import defaultdict
+import random
+def make_stratified_folds(data, l_folds, seed=42):
+    rnd = random.Random(seed)
+    buckets = defaultdict(list)
+    for y, x in data:
+        buckets[y].append((y, x))
+    for y in buckets:
+        rnd.shuffle(buckets[y])
+    folds = [[] for _ in range(l_folds)]
+    for y, items in buckets.items():
+        for i, item in enumerate(items):
+            folds[i % l_folds].append(item)
+    return folds
+    \end{lstlisting}
+    \end{figure}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Optimierung: Versuchte Methoden}
+\begin{columns}[T,onlytextwidth] % [T] aligns to top
+  \begin{column}{0.32\textwidth}
+    \begin{itemize}
+        \item stratified l-fold
+        \item \textbf{additional distance metrics}
+        \item higher percision summation
+        \item leaf size Variation
+    \end{itemize}
+  \end{column}
+  \hfill
+  \begin{column}{0.65\textwidth}
+    \begin{figure}
+    \begin{lstlisting}[language=Python, basicstyle=\tiny\ttfamily]
+if self.metric == "l2":
+  return sum((x - y) ** 2 for x, y in zip(a, b))
+if self.metric == "l1":
+  return sum(abs(x - y) for x, y in zip(a, b))
+# linf
+    return max(abs(x - y) for x, y in zip(a, b))
+    \end{lstlisting}
+    \end{figure}
+  \end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Optimierung: Versuchte Methoden}
+\begin{columns}[T,onlytextwidth] % [T] aligns to top
+  \begin{column}{0.32\textwidth}
+    \begin{itemize}
+        \item stratified l-fold
+        \item additional distance metrics
+        \item \textbf{higher percision summation}
+        \item \textbf{leaf size Variation}
+    \end{itemize}
+  \end{column}
+  \hfill
+  \begin{column}{0.65\textwidth}
+    \begin{figure}
+    \begin{lstlisting}[language=Python]
+math.fsum(...)
+    \end{lstlisting}
+    \end{figure}
+  \end{column}
+\end{columns}
+\end{frame}
+
+% \begin{frame}[fragile]{Optimierung: Alte Testphase}
+%     \begin{lstlisting}[language=Python]
+% for y_true, x_test in dataset_test:
+%     total_sum = 0.0
+%     for tree in fold_classifiers:
+%         neighbors = tree.query(x_test, best_k)
+%         label_sum = sum(neighbors)
+%         f_Di_k = 1.0 if label_sum >= 0 else -1.0
+%         total_sum += f_Di_k
+        
+%     y_pred = 1.0 if total_sum >= 0 else -1.0
+%     predictions.append(y_pred)
+%     if y_pred != y_true: test_errors += 1
+
+% best_error_rate = test_errors / len(dataset_test) if dataset_test else 0.0
+%     \end{lstlisting}
+% \end{frame}
+
+% \begin{frame}[fragile]{Optimierung: Neue Testphase}
+%     \begin{lstlisting}[language=Python]
+% for y_true, x_test in dataset_test:
+%     vote_sum = 0.0
+%     for tree in ensemble_trees:
+%         neighbors = tree.query(x_test, best_k)
+%         pred_i = 1.0 if sum(neighbors) >= 0 else -1.0  # sign(0)=1
+%         vote_sum += pred_i
+%     y_pred = 1.0 if vote_sum >= 0 else -1.0           # sign(0)=1
+%     predictions.append(y_pred)
+%     if y_pred != y_true: test_errors += 1
+%     test_error_rate = test_errors / len(dataset_test) if dataset_test else 0.0
+%     \end{lstlisting}
+% \end{frame}
+\subsection{Testen}

@@ -1,0 +1,18 @@
+\section{Problemstellung}
+\begin{frame}{Problemstellung}
+\begin{itemize}
+    \item Aufgabe: Methode zur \textbf{binären Klassifikation} in Python
+    \item Gegeben: Datenpuntke mit Labels
+    \begin{align*}
+        D = \{(y_i, x_i)\}_{i=1}^n,~
+        y_i \in \{-1,+1\},~
+        x_i \in [-1,+1]^d
+    \end{align*}
+    \item Lerne einen Klassifikator
+    \begin{align*}
+        f_D : [-1,+1]^d \rightarrow \{-1,+1\}
+    \end{align*}
+    \item Ziel: \textbf{Minimierung der Fehlklassifikationsrate} auf unbekannten Testdaten $D'$
+    \item Ansatz: \textbf{$k$-nächste-Nachbarn} mit Kreuzvalidierung zur Auswahl von $k^*$ mit Ball-Tree
+\end{itemize}
+\end{frame}

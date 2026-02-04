@@ -1,0 +1,19 @@
+\frametitle{Optimierung: Versuchte Methoden}
+\begin{columns}[T,onlytextwidth] % [T] aligns to top
+  \begin{column}{0.32\textwidth}
+    \begin{itemize}
+        \item stratified l-fold
+        \item additional distance metrics
+        \item \textbf{higher percision summation}
+        \item \textbf{leaf size Variation}
+    \end{itemize}
+  \end{column}
+  \hfill
+  \begin{column}{0.65\textwidth}
+    \begin{figure}
+    \begin{lstlisting}[language=Python]
+math.fsum(...)
+    \end{lstlisting}
+    \end{figure}
+  \end{column}
+\end{columns}

@@ -1,0 +1,80 @@
+%----------------------------------------------------------------------------------------
+% BEAMER SETUP (LIGHTWEIGHT)
+%----------------------------------------------------------------------------------------
+
+\usetheme[progressbar=frametitle]{metropolis}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+
+\graphicspath{{figures/}}
+
+%----------------------------------------------------------------------------------------
+% BASIC PACKAGES
+%----------------------------------------------------------------------------------------
+
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+
+% Math
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{braket}
+\usepackage{cancel}
+
+% Animations
+\usepackage{media9}
+
+% Colors
+\definecolor{darkgreen}{rgb}{0.0,0.6,0.0}
+
+% Figures
+\usepackage{caption}
+\usepackage{subcaption}
+
+% Code
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{orange},
+  showstringspaces=false,
+  breaklines=true
+}
+
+%----------------------------------------------------------------------------------------
+% BEAMER BLOCK FONTS
+%----------------------------------------------------------------------------------------
+
+\setbeamerfont{block title}{series=\bfseries,size=\small}
+\setbeamerfont{block body}{size=\footnotesize}
+
+\setbeamerfont{alertblock title}{series=\bfseries,size=\small}
+\setbeamerfont{alertblock body}{size=\footnotesize}
+
+\setbeamerfont{exampleblock title}{series=\bfseries,size=\small}
+\setbeamerfont{exampleblock body}{size=\footnotesize}
+
+%----------------------------------------------------------------------------------------
+% CUSTOM COMMANDS (KEPT)
+%----------------------------------------------------------------------------------------
+
+\newcommand{\cancelblue}[2]{\textcolor{blue}{\cancelto{#1}{#2}}}
+\newcommand{\cancelb}[1]{\textcolor{blue}{\cancel{#1}}}
+\newcommand{\cancelg}[1]{\textcolor{darkgreen}{\cancel{#1}}}
+\newcommand{\cancelr}[1]{\textcolor{red}{\cancel{#1}}}
+
+\newcommand{\overblue}[2]{\textcolor{blue}{\overbrace{#2}^{#1}}}
+\newcommand{\underblue}[2]{\textcolor{blue}{\underbrace{#2}_{#1}}}
+
+\newcommand{\blue}[1]{\textcolor{blue}{#1}}
+\newcommand{\red}[1]{\textcolor{red}{#1}}
+\newcommand{\dgreen}[1]{\textcolor{darkgreen}{#1}}
+
+\newcommand{\ulr}[1]{\textcolor{red}{\underline{#1}}}
+\newcommand{\ulg}[1]{\textcolor{darkgreen}{\underline{#1}}}
+\newcommand{\ulb}[1]{\textcolor{blue}{\underline{#1}}}
