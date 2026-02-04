@@ -157,7 +157,7 @@
     \vfill
 \end{frame} % Divider: Speed Ups
 
-\begin{frame}{Ball Tree: Conceptual}
+\begin{frame}{Ball Tree: Konzept}
     \begin{tikzpicture}[overlay, scale=1.2, yshift=0.0cm, xshift=4.0cm]
 
         \node at (-0.2,-0.2) {\includegraphics[width=1\linewidth]{balltree.png}};
@@ -169,11 +169,11 @@
         \onslide<-6>{\fill[white] (-1.45,-0.2) rectangle (1.1,-3.2);}
 
         \begin{scope}[xshift=3.0cm, yshift=-0.5cm]
-            \node<2-> at (-0.45,0.0)  {\Large \textbf{\red{At each node}:}};
-            \node<3-> at (0.25,-0.5)  {\large 1. Compute center and radius};
-            \node<4-> at (0.2,-1.0) {\large 2. Choose two distant points};
-            \node<5-> at (0.33,-1.5)  {\large 3. Split points based on points};
-            \node<6-> at (0.44,-2.0)  {\large 4. Repeat until leaf size reached};
+            \node<2-> at (-0.4,0.0)  {\large \textbf{\red{An jedem Knoten}:}};
+            \node<3-> at (0.3,-0.5)  {1. Mittelpunkt, Radius berechnen};
+            \node<4-> at (0.25,-1.0) {2. Zwei entfernte Punkte wählen};
+            \node<5-> at (0.2,-1.5)  {3. Daten aufteilen nach Distanz};
+            \node<6-> at (0.24,-2.0)  {4. Repeat until leaf size reached};
             \node<7-> at (0.3,-2.6) {\large\red{ \textbf{Leaf nodes store data points}}};
         \end{scope}
     
@@ -207,7 +207,7 @@
 \end{semiverbatim}
 \end{frame}
 
-\begin{frame}[fragile]{Ball Tree: Recursive}
+\begin{frame}[fragile]{Ball Tree: Rekursiv}
     \begin{tikzpicture}[overlay, scale=1.1, yshift=-2.2cm, xshift=5.7cm]
 
     % Datapoints
@@ -271,19 +271,20 @@
 \end{semiverbatim}
 \end{frame}
 
-\begin{frame}[fragile]{Ball Tree: Recursive Speed}
+\begin{frame}[fragile]{Ball Tree: Rekursive Laufzeit}
     \begin{enumerate}
-        \item Use \textbf{\red{built-in} functions} (C-optimized). \onslide<4->{{\Huge \dgreen{\checkmark}} }\\For example, instead of list comprehension:
+        \item Verwenden von \textbf{\red{built-in}} Funktionen (C-optimized). \onslide<4->{{\Huge \dgreen{\checkmark}} }
+        \\Zum Beispiel, anstatt von list comprehension:
             \begin{semiverbatim}
                 \small
 \red{def} \purple{vector_sum}(vectors):
     \red{return} [\purple{sum}(components) \blue{for} components \blue{in} \purple{zip}(\blue{*}vectors)]
             \end{semiverbatim}
         \item<2-> \red{\textbf{Avoid defining}} often used functions. \onslide<5->{{\Large \red{\text{\sffamily X}} }}
-        \item<3-> Save often used variables \red{\textbf{locally}}. \onslide<6->{{\Large \red{\text{\sffamily X}}} }
+        \item<3-> \red{\textbf{Lokales Speichern}} von oft verwendeten Variablen. \onslide<6->{{\Large \red{\text{\sffamily X}}} }
     \end{enumerate}
     \vspace{0.7cm}
-    \LARGE \onslide<7->{\textbf{Recursive Method not optimal \red{!!!}}}
+    \LARGE \onslide<7->{\textbf{Rekursive Methode nicht optimal \red{!!!}}}
 \end{frame}
 
 
