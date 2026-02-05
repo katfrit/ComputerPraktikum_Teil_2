@@ -336,6 +336,42 @@
         \end{itemize}
     \end{frame}
 
+    \begin{frame}[fragile]{Speed Ups: Best-First statt Depth-First}
+    \begin{figure}
+        \begin{lstlisting}[language=Python, basicstyle=\tiny\ttfamily]
+        def query(self, target, k):
+
+            # Queue format: (distance_to_center, index)
+            queue = [(d_root, 0)]
+
+            while queue:
+                # Sorting for best-first search (smallest distance first)
+                queue.sort(key=lambda x: x[0], reverse=True)
+                d_to_center, idx = queue.pop()
+                node = self.nodes[idx]
+
+                # Early termination (global stop)
+                if len(neighbors) == k:
+                    # d_min_so_far is the square root of the worst distance
+                    if d_to_center > node['radius'] + math.sqrt(neighbors[-1][0]):
+                     break
+                else:
+                    # Inspect child nodes and add them to the queue only if they can 
+                    #potentially improve the result
+
+                    for child_idx in [node['left'], node['right']]:
+                        d_child = math.sqrt(max(0, target_norm_sq - 
+                        2 * dot_child + child['center_norm_sq']))
+
+                        # Local pruning: add only if the ball is reachable
+                        if len(neighbors) < k or d_child <= child['radius'] 
+                        + math.sqrt(neighbors[-1][0]):
+                            queue.append((d_child, child_idx))
+
+        \end{lstlisting}
+        \end{figure}
+    \end{frame}
+
     \begin{frame}[fragile]{Speed Ups: Binomische Formel}
         \begin{columns}
         \column{0.5\textwidth}
