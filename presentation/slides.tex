@@ -342,6 +342,50 @@
         \end{multicols}
     \end{frame}
 
+    \begin{frame}[fragile]{Speed Ups: Binomische Formel}
+        \begin{columns}
+        \column{0.5\textwidth}
+        \textbf{Alt: Naive Distanz}
+        \begin{lstlisting}[language=Python, basicstyle=\tiny\ttfamily]
+        def query(target, k):
+            # Fuer jeden Punkt:
+            d_sq = sum(
+                (t - c)**2 
+                    for t, c in zip(target, coord)
+            )
+        \end{lstlisting}
+        Kosten bei $d=15$:
+        \begin{itemize}
+            \item 15 Subtraktionen
+            \item 15 Quadrierungen
+            \item 14 Additionen
+        \end{itemize}
+        \textbf{44 Operationen}
+
+        
+        \column{0.5\textwidth}    
+        \textbf{Neu: Binomische Formel}
+        \begin{lstlisting}[language=Python, basicstyle=\tiny\ttfamily]
+        def __init__(self, data, leaf_size=40):
+            # Norm-Vorberechnung
+            self.point_norms[coords_tuple] 
+            = sum(c * c 
+            for c in coords)
+        def query(self, target, k):
+            target_norm_sq = sum(t * t 
+            for t in target)
+            # Für jeden Punkt:
+            d_sq = target_norm_sq -  
+            2 * sum(t * c for t, c in 
+            zip(target, coord)) 
+            + self.point_norms[c_tuple]
+        # 2d + 3 Operationen
+        \end{lstlisting}
+        Kosten bei $d=15$:\\
+        \textbf{33 Operationen}
+        \end{columns}
+    \end{frame}
+
 
 
 
