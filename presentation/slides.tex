@@ -316,30 +316,24 @@
     \end{frame}
 
 
-\begin{frame}{Fehlerreduktion: Plots}
-        \begin{multicols}{2}
-        \begin{figure}
-            \centering
-            \includegraphics[width=\linewidth]{team-2-bananas-1-2d-old.train.png}
-            \caption{Alt: Sequentielles Plotten}
-        \end{figure}
-
-        \begin{figure}
-            \centering
-            \includegraphics[width=\linewidth]{team-2-bananas-1-2d.train.png}
-            \caption{Neu: Zufälliges Plotten}
-        \end{figure}
-        \end{multicols}
-
-        \begin{multicols}{2}
+    \begin{frame}{Speed Ups: Best-First statt Depth-First}
         \begin{itemize}
-            \item Klassen nacheinander geplottet
-            \item Klasse -1 überdeckt +1
-            \item \texttt{random.shuffle()} vor Plot
-            \item Tatsächliche Überlappung der Klassen $\Rightarrow$ \glqq wahre\grqq\, Struktur
+            \item \textbf{Alt: Depth-First}
+            \begin{itemize}
+            \item Stack-LIFO
+            \item Näheres Kind zuerst (lokal)
+            \item keine globale Priorisierung
         \end{itemize}
-            
-        \end{multicols}
+
+            \item \textbf{Neu: Best-First}
+            \begin{itemize}
+            \item Queue statt Stack
+            \item Sortieren die Queue bei jedem Loop nach der Distanz
+            \item Mit \texttt{reverse=True} und \texttt{.pop()} holen wir Node mit kleinster Distanz zum Query-Punkt $\Rightarrow$ besuchen vielversprechendste Node als nächste
+            \item Beim Hinzufügen von Kindern speichern wir auch deren Distanz: Tupel \texttt{d-child}, \texttt{child-idx} erlaubt Sortierung
+        \end{itemize}
+        $\Rightarrow$ Wir besuchen deutliche weniger Nodes, weil weit entfernte Bereiche früher gepruned werden..
+        \end{itemize}
     \end{frame}
 
     \begin{frame}[fragile]{Speed Ups: Binomische Formel}
@@ -386,7 +380,31 @@
         \end{columns}
     \end{frame}
 
+\begin{frame}{Fehlerreduktion: Plots}
+        \begin{multicols}{2}
+        \begin{figure}
+            \centering
+            \includegraphics[width=\linewidth]{team-2-bananas-1-2d-old.train.png}
+            \caption{Alt: Sequentielles Plotten}
+        \end{figure}
 
+        \begin{figure}
+            \centering
+            \includegraphics[width=\linewidth]{team-2-bananas-1-2d.train.png}
+            \caption{Neu: Zufälliges Plotten}
+        \end{figure}
+        \end{multicols}
+
+        \begin{multicols}{2}
+        \begin{itemize}
+            \item Klassen nacheinander geplottet
+            \item Klasse -1 überdeckt +1
+            \item \texttt{random.shuffle()} vor Plot
+            \item Tatsächliche Überlappung der Klassen $\Rightarrow$ \glqq wahre\grqq\, Struktur
+        \end{itemize}
+            
+        \end{multicols}
+    \end{frame}
 
 
     \begin{frame}{Fehlerreduktion: \texttt{check accuracy.py}}
