@@ -443,18 +443,16 @@
     \end{frame}
 
 
-    \begin{frame}{Fehlerreduktion: \texttt{check accuracy.py}}
+   \begin{frame}{Fehlerreduktion: \texttt{check accuracy.py}}
         \textbf{Zweck:} Vergleiche \texttt{test.csv} mit \texttt{result.csv} und berechne Genauigkeit\\
-        \textbf{Nutzen:} Direkte Datenvalidierung\\
-        \textrm{}\\
-        \centering 
-        \begin{tikzpicture}
-            \node (node01) [startstop] {\textbf{Lade} \texttt{true-labels} \textbf{und} \texttt{pred-labels}};
-            \node (node02) [startstop, below of=node01, yshift=-1.cm] {\textbf{Vergleiche\\elementenweise}};
-            \node (node03) [startstop, below of=node02, yshift=-1.cm] {\textbf{Genauigkeit berechnen}};
-            \draw [arrow] (node01) -- node[midway, below, xshift=0.25cm] {} (node02);
-            \draw [arrow] (node02) -- node[midway, below, xshift=0.25cm] {} (node03);
-        \end{tikzpicture}
+        \textbf{Nutzen:} Direkte Datenvalidierung
+
+        \begin{enumerate}
+            \item \textbf{Lade} \textt{true\_labels} \textbf{und} \texttt{pred\_labels}
+            \item \textbf{Vergleiche elementenweise}
+
+            \item \textbf{Genauigkeit berechnen}
+        \end{enumerate}
 
     \end{frame}
 
