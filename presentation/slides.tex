@@ -293,16 +293,15 @@
 % ----------------------------------------------------------------------------------------
 
 
-    \begin{frame}{Ball Tree: iterative Methode}
-        \centering 
-        \begin{tikzpicture}
-            \node (node01) [startstop] {\textbf{Stack initialisieren:} Solange Stack nicht leer - nächste Node heraus holen};
-            \node (node02) [startstop, below of=node01, yshift=-1.5cm, xshift=-2.75cm] {Wenn Datenmenge klein genug ist: Leaf-Node erstellen};
-            \node (node03) [startstop, below of=node01, yshift=-1.5cm, xshift=2.75cm] {Daten splitten und beide Kinder zum Stack hinzufügen\\
-            LIFO: erst rechts, dann links};
-            \draw [arrow] (node01) -- node[midway, below, xshift=0.25cm] {} (node02);
-            \draw [arrow] (node01) -- node[midway, below, xshift=0.25cm] {} (node03);
-        \end{tikzpicture}
+    \begin{frame}{Ball Tree: Iterative Methode}
+    \textbf{Stack initialisieren:} Solange Stack nicht leer - nächste Node heraus holen
+        \begin{itemize}
+            \item Wenn Datenmenge klein genug ist: Leaf-Node erstellen
+
+            \item Daten splitten und beide Kinder zum Stack hinzufügen\\
+            LIFO: erst rechts, dann links
+            
+        \end{itemize}
     \end{frame}
 
     \begin{frame}{Speed Ups}
